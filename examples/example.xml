@@ -1,0 +1,29 @@
+﻿<?xml version="1.0"?>
+<workflow>
+	<!--Datasets described below-->
+	<datasets>
+		<dataset type="file" id="input_dataset">
+			<description>File to be copied</description>
+			<path>input.txt</path>
+		</dataset>
+		<dataset type="file" id="output_dataset">
+			<description>Copied file</description>
+			<path>output.txt</path>
+		</dataset>
+	</datasets>
+	
+	<!--Tasks described below-->	
+	<tasks>
+		<task type="local" id="data_copier">
+			<description>Simply copies data from input to output</description>
+			<path>cp</path>
+			<inputs>
+				<dataset id="input_dataset"/>
+			</inputs>
+			<outputs>
+				<dataset id="output_dataset"/>
+			</outputs>
+			<command-args>$input_dataset $output_dataset</command-args>
+		</task>
+	</tasks>
+</workflow>
