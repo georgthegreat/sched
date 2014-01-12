@@ -2,11 +2,11 @@
 <workflow>
 	<!--Datasets described below-->
 	<datasets>
-		<dataset type="file" id="input_dataset">
+		<dataset type="input_file" id="input_dataset">
 			<description>File to be copied</description>
 			<path>input.txt</path>
 		</dataset>
-		<dataset type="file" id="output_dataset">
+		<dataset type="output_file" id="output_dataset">
 			<description>Copied file</description>
 			<path>output.txt</path>
 		</dataset>

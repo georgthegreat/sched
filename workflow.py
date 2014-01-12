@@ -3,12 +3,12 @@ import os.path
 
 from lxml import etree
 
-from dataset import Dataset
-from errors import ParseError
-from task import Task
+import dataset
+import errors
+import task
 
 # Classes 
-class ParsedWorkflow(object):
+class AbstractWorkflow(object):
 	"""
 	Describes scientific workflow
 	"""
@@ -16,54 +16,66 @@ class ParsedWorkflow(object):
 		"""
 		Allows to create scientific workflow from a:
 		
-		* map of datasets (id -> dataset)
-		* map of tasks (id -> task)
+		* dict of datasets (id -> dataset)
+		* dict of tasks (id -> task)
 		"""
 		self.datasets = datasets
 		self.tasks = tasks
-	
+		#self.update_tasks
 
-# Methods
-def from_xml_file(path):
-	"""
-	Parses xml file and returns a  workflow instance
-	"""
-	if not os.path.isfile(path):
-		raise OSError("Path to file expected")
-		
-	with open(path, "r+b") as input_file:
-		str_data = input_file.read()
-		#trimming utf-8 byte order mark
-		if str_data.startswith(codecs.BOM_UTF8):
-			str_data = str_data[len(codecs.BOM_UTF8):].decode()
-		else:
-			print("Warning: File at {0} is not in utf-8".format(path))
-			str_data = str_data.decode()
-		return from_xml_string(str_data)
+	def update_tasks(self):
+		"""
+		Visits all tasks and updates their status.
+		Assumes that all tasks have "parsed" status at the beginning
+		"""
+		#for id_, task_ in self.tasks.iteritems():
+		#	task_.update_status(self.datasets)
+		#pass
 
+	@staticmethod
+	def from_xml_file(path):
+		"""
+		Parses xml file and returns a  workflow instance
+		"""
+		if not os.path.isfile(path):
+			raise OSError("Path to file expected")
 		
-def from_xml_string(str):
-	"""
-	Parses xml string and returns a workflow instance
-	"""
-	xml = etree.fromstring(str)
-	
-	datasets_nodes = xml.xpath("/workflow/datasets")
-	if len(datasets_nodes) != 1:
-		raise ParseError("Exactly one 'datasets' node expected")
-	dataset_nodes = datasets_nodes[0].xpath("/dataset")
-	
-	datasets = {}
-	for node in dataset_nodes:
-		datasets.update(Dataset.from_xml_node(node))
-	
-	tasks_nodes = xml.xpath("/workflow/tasks")
-	if len(tasks_nodes) != 1:
-		raise ParseError("Exactly one 'tasks' node expected")	
-	task_nodes = tasks_nodes[0].xpath("/task")	
-	
-	tasks = {}
-	for node in task_nodes:
-		tasks.update(Task.from_xml_node(node))
+		basepath = os.path.abspath(path)
+		dirname = os.path.dirname(basepath)
+
+		with open(path, "r+b") as input_file:
+			str_data = input_file.read()
+			#trimming utf-8 byte order mark
+			if str_data.startswith(codecs.BOM_UTF8):
+				str_data = str_data[len(codecs.BOM_UTF8):].decode()
+			else:
+				print("Warning: File at {0} is not in utf-8".format(path))
+				str_data = str_data.decode()
+			return AbstractWorkflow.from_xml_string(str_data, dirname)
+
+	@staticmethod
+	def from_xml_string(string, dirname):
+		"""
+		Parses xml string and returns a workflow instance
+		"""
+		xml = etree.fromstring(string)
 		
-	return ParsedWorkflow(datasets, tasks)
+		datasets_nodes = xml.xpath("/workflow/datasets")
+		if len(datasets_nodes) != 1:
+			raise errors.ParseError("Exactly one 'datasets' node expected")
+		dataset_nodes = datasets_nodes[0].xpath("./dataset")
+		
+		datasets = {}
+		for node in dataset_nodes:
+			datasets.update(dataset.Dataset.from_xml_node(node, dirname))
+		
+		tasks_nodes = xml.xpath("/workflow/tasks")
+		if len(tasks_nodes) != 1:
+			raise errors.ParseError("Exactly one 'tasks' node expected")	
+		task_nodes = tasks_nodes[0].xpath("./task")
+		
+		tasks = {}
+		for node in task_nodes:
+			tasks.update(task.Task.from_xml_node(node))
+			
+		return AbstractWorkflow(datasets, tasks)

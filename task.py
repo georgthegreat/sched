@@ -1,26 +1,51 @@
 import errors
 
 class TaskType(object):
-	unknown = 0
-	local = 1
+	Unknown = 0
+	Local = 1
 	
 	@staticmethod
 	def from_string(str):
 		if str == "local":
-			return TaskType.local
+			return TaskType.Local
 		else:
-			return TaskType.unknown
-			
+			return TaskType.Unknown
+
+
+class TaskStatus(object):
+	Parsed = 0
+	WaitForDeps = 1
+	Pending = 2
+	Running = 3
+	Finished = 4
+	Failed = 5
+
 
 class Task(object):
 	"""
 	Class representing single workflow task
 	"""
-	def __init__(self, type, path, input_datasets, output_datasets, description):
-		self.type = type
+	def __init__(self, type_, path, input_datasets, output_datasets, description, command_args):
+		self.type_ = type_
 		self.path = path
-		self.description = description		
-	
+		self.input_datasets = input_datasets
+		self.output_datasets = output_datasets
+		self.description = description
+		self.status = TaskStatus.Parsed
+		self.command_args = command_args
+
+	def update_and_validate(self, new_status, datasets):
+		pass
+
+	@property
+	def command_line(self):
+		"""
+		Returns list containing task as a command
+		"""
+		command = []
+		command.append(self.path)
+
+
 	@staticmethod	
 	def from_xml_node(node):
 		"""
@@ -28,28 +53,16 @@ class Task(object):
 		"""
 		id = node.attrib["id"]
 		type = TaskType.from_string(node.attrib["type"])
-		path = node.xpath("/path")[0]
-		description = node.xpath("/description")[0]
-		command_args = node.xpath("/command-args")
+		path = node.xpath("./path/text()")[0]
+		description = node.xpath("./description/text()")[0]
+		command_args = node.xpath("./command-args/text()")[0]
 		
-		inputs_nodes = node.xpath("/inputs")
-		if len(inputs_nodes) > 1:
-			raise errors.ParseError("Multiple 'inputs' nodes found")
-		dataset_nodes = inputs_nodes.xpath("/dataset")
+		id_extractor = lambda node: node.attrib["id"]
+
+		inputs_nodes = node.xpath("./inputs[0]/dataset")
+		input_datasets = set(map(id_extractor, inputs_nodes))
 		
-		input_datasets = set()
-		for node in dataset_nodes:
-			id = node.attrib["id"]
-			input_datasets.add(id)
+		outputs_nodes = node.xpath("./outputs[0]/dataset")
+		output_datasets = set(map(id_extractor, outputs_nodes))
 		
-		outputs_nodes = node.xpath("/outputs")
-		if len(inputs_nodes) > 1:
-			raise errors.ParseError("Multiple 'outputs' nodes found")
-		dataset_nodes = outputs_nodes.xpath("/dataset")
-		
-		output_datasets = set()
-		for node in dataset_nodes:
-			id = node.attrib["id"]
-			output_datasets.add(id)
-			
-		return {id: Task(type, path, input_datasets, output_datasets, description)}
+		return {id: Task(type, path, input_datasets, output_datasets, description, command_args)}
