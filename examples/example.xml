@@ -23,7 +23,7 @@
 			<outputs>
 				<dataset id="output_dataset"/>
 			</outputs>
-			<command-args>$input_dataset $output_dataset</command-args>
+			<args>$input_dataset $output_dataset</args>
 		</task>
 	</tasks>
 </workflow>

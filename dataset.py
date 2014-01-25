@@ -32,19 +32,29 @@ class Dataset(object):
 	"""
 	Class representing input or output dataset
 	"""
-	def __init__(self, type_, path, description):
+	def __init__(self, id, type_, path, description):
 		self.type_ = type_
 		self.path = path
 		self.description = description
-		self.status_ = DatasetStatus.NotAvailable
+		self._status = DatasetStatus.NotAvailable
 
 		if self.type_ == DatasetType.InputFile:
-			self.update_and_validate(DatasetStatus.Available)
-
-	def update_and_validate(self, new_status):
+			self.update(DatasetStatus.Available)
+	
+	#class member properties
+	@property
+	def id(self):
+		return _id
+		
+	#status access properties	
+	@property
+	def is_available(self):
+		return self._status == DatasetStatus.Available
+			
+	def update(self, new_status):
 		"""
-		Updates self.status as needed.
-		Raises ValidationError if dataset isn't valid 
+		Updates self._status as needed.
+		Raises ValidationError if status isn't valid 
 		"""
 		if self.type_ == DatasetType.InputFile:
 			if new_status == DatasetStatus.Available:
@@ -59,8 +69,9 @@ class Dataset(object):
 				raise errors.ValidationError("Dataset of type [{0}] got invalid status [{1}]"\
 					.format(self.type_, new_status))
 		else:
-			self.status_ = new_status
-
+			pass
+			
+		self._status = new_status
 
 	@staticmethod
 	def from_xml_node(node, dirname):
@@ -72,4 +83,4 @@ class Dataset(object):
 		path = os.path.join(dirname, node.xpath("./path/text()")[0])
 		description = node.xpath("./description/text()")[0]
 
-		return {id_: Dataset(type_, path, description)}
+		return {id_: Dataset(id_, type_, path, description)}

@@ -1,5 +1,6 @@
 import codecs
 import os.path
+import queue
 
 from lxml import etree
 
@@ -14,24 +15,45 @@ class AbstractWorkflow(object):
 	"""
 	def __init__(self, datasets, tasks):
 		"""
-		Allows to create scientific workflow from a:
-		
+		Allows to create scientific workflow from:
 		* dict of datasets (id -> dataset)
 		* dict of tasks (id -> task)
 		"""
 		self.datasets = datasets
 		self.tasks = tasks
-		#self.update_tasks
+		self.unfinished_count = len(tasks)
+		self.pending_tasks = queue.Queue()
+		
+		self.update()
 
-	def update_tasks(self):
+	def update(self, task_=None, new_status=None):
 		"""
+		Marks task_ to have new_status.
 		Visits all tasks and updates their status.
-		Assumes that all tasks have "parsed" status at the beginning
+		Pushes new tasks into pending_tasks queue.
 		"""
-		#for id_, task_ in self.tasks.iteritems():
-		#	task_.update_status(self.datasets)
-		#pass
+		if (task_ is not None) and \
+			(new_status is not None):
+			task_.update(new_status)
+			
+		for task_ in self.tasks.values():
+			task_.update()
+			if task_.is_pending:
+				self.pending_tasks.put(task_)
+		
+		if task_.is_finished or task_.is_failed:
+			self.unfinished_count -= 1
+		
+		if self.finished:
+			self.pending_tasks.put(None)
 
+	@property
+	def finished(self):
+		return self.unfinished_count == 0
+		
+	def get_pending_task(self):
+		return self.pending_tasks.get()
+				
 	@staticmethod
 	def from_xml_file(path):
 		"""
@@ -40,8 +62,8 @@ class AbstractWorkflow(object):
 		if not os.path.isfile(path):
 			raise OSError("Path to file expected")
 		
-		basepath = os.path.abspath(path)
-		dirname = os.path.dirname(basepath)
+		abspath = os.path.abspath(path)
+		dirname = os.path.dirname(abspath)
 
 		with open(path, "r+b") as input_file:
 			str_data = input_file.read()
@@ -71,11 +93,11 @@ class AbstractWorkflow(object):
 		
 		tasks_nodes = xml.xpath("/workflow/tasks")
 		if len(tasks_nodes) != 1:
-			raise errors.ParseError("Exactly one 'tasks' node expected")	
+			raise errors.ParseError("Exactly one 'tasks' node expected")
 		task_nodes = tasks_nodes[0].xpath("./task")
 		
 		tasks = {}
 		for node in task_nodes:
-			tasks.update(task.Task.from_xml_node(node))
+			tasks.update(task.Task.from_xml_node(node, datasets))
 			
 		return AbstractWorkflow(datasets, tasks)
