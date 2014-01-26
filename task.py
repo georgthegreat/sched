@@ -1,17 +1,23 @@
 import re
 
 import errors
+import dataset
 
 class TaskType(object):
-	Unknown = 0
-	Local = 1
+	Local = 0
+	
+	_dict = {
+		"local": Local
+	}
 	
 	@staticmethod
-	def from_string(str):
-		if str == "local":
-			return TaskType.Local
-		else:
-			return TaskType.Unknown
+	def from_string(value):
+		result = TaskType._dict.get(value, None)
+		if result is None:
+			raise errors.ParseError("Unknown task type {value}".format(
+				value=value
+			))
+		return result
 
 
 class TaskStatus(object):
@@ -40,13 +46,12 @@ class Task(object):
 		self._status = TaskStatus.Waiting
 		self._datasets = datasets
 		
-		str_not_empty = lambda string: len(string) != 0
-		self.args = list(filter(str_not_empty, args.split(" ")))	
+		self.args = args.split()
 	
 	#class member properties
 	@property
 	def id(self):
-		return _id
+		return self._id
 	
 	#status access properties
 	@property
@@ -71,8 +76,10 @@ class Task(object):
 		"""
 		if new_status is None:
 			if self.is_waiting:
-				status_checker = lambda id, _status: self._datasets[id].status == status
-				if all(map(status_checker, self.input_datasets)):
+				available = lambda dataset_: self._datasets[dataset_].is_available
+				
+				if all(map(available, self.input_datasets)):
+					print("Marking {id} as pending".format(id=self._id))
 					self._status = TaskStatus.Pending
 		else:
 			self._status = new_status
@@ -108,10 +115,16 @@ class Task(object):
 		
 		id_extractor = lambda node: node.attrib["id"]
 
-		inputs_nodes = node.xpath("./inputs[0]/dataset")
+		inputs_nodes = node.xpath("./inputs/dataset")
 		input_datasets = set(map(id_extractor, inputs_nodes))
 		
-		outputs_nodes = node.xpath("./outputs[0]/dataset")
+		outputs_nodes = node.xpath("./outputs/dataset")
 		output_datasets = set(map(id_extractor, outputs_nodes))
 		
-		return {id_: Task(datasets, id_, type_, path, input_datasets, output_datasets, description, command_args)}
+		if (len(input_datasets) == 0) and \
+			(len(output_datasets) == 0):
+			raise errors.ParseError("Task {id} doesn't have any input or output datasets".format(
+				id=id_
+			))
+		
+		return Task(datasets, id_, type_, path, input_datasets, output_datasets, description, command_args)

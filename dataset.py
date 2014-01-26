@@ -7,19 +7,21 @@ class DatasetType(object):
 	InputFile = 0 
 	TemporaryFile = 1
 	OutputFile = 2
-
-	@staticmethod
-	def from_string(value):
-		_dict = {
-			"input_file": DatasetType.InputFile,
-			"tmpfile": DatasetType.TemporaryFile,
-			"output_file": DatasetType.OutputFile
-		}	
+	
+	_dict = {
+		"input_file": InputFile,
+		"tmp_file": TemporaryFile,
+		"output_file": OutputFile
+	}
 		
-		if value in _dict:
-			return _dict[value]
-		else:
-			raise errors.ParseError("Unknown dataset type")
+	@staticmethod
+	def from_string(value):		
+		result = DatasetType._dict.get(value, None)
+		if result is None:
+			raise errors.ParseError("Unknown dataset type {value}".format(
+				value=value
+			))
+		return result
 
 
 class DatasetStatus(object):
@@ -32,7 +34,8 @@ class Dataset(object):
 	"""
 	Class representing input or output dataset
 	"""
-	def __init__(self, id, type_, path, description):
+	def __init__(self, id_, type_, path, description):
+		self._id = id_
 		self.type_ = type_
 		self.path = path
 		self.description = description
@@ -44,7 +47,7 @@ class Dataset(object):
 	#class member properties
 	@property
 	def id(self):
-		return _id
+		return self._id
 		
 	#status access properties	
 	@property
@@ -83,4 +86,4 @@ class Dataset(object):
 		path = os.path.join(dirname, node.xpath("./path/text()")[0])
 		description = node.xpath("./description/text()")[0]
 
-		return {id_: Dataset(id_, type_, path, description)}
+		return Dataset(id_, type_, path, description)

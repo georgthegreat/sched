@@ -27,8 +27,6 @@ class LocalScheduler(abstract.AbstractScheduler):
 		self.running_lock = threading.Lock()
 		#semaphore to control the amount of process, running simultaneously
 		self.running_semaphore = threading.Semaphore(self.CPU_COUNT)
-		#condition variable to control if we can call wait() without exception raise
-		self.wait_cv = threading.Condition()
 
 		self.run_thread.start()		
 		self.wait_thread.start()
@@ -67,7 +65,6 @@ class LocalScheduler(abstract.AbstractScheduler):
 		"""
 		Performs infinite scheduling of pending tasks 
 		"""
-		#self.popens = []
 		while True:
 			task_data = self.tasks.get()
 			self.running_semaphore.acquire()

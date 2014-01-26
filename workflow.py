@@ -35,17 +35,16 @@ class AbstractWorkflow(object):
 		if (task_ is not None) and \
 			(new_status is not None):
 			task_.update(new_status)
+			if task_.is_finished or task_.is_failed:
+				self.unfinished_count -= 1			
+			if self.finished:
+				self.pending_tasks.put(None)
 			
-		for task_ in self.tasks.values():
-			task_.update()
-			if task_.is_pending:
-				self.pending_tasks.put(task_)
-		
-		if task_.is_finished or task_.is_failed:
-			self.unfinished_count -= 1
-		
-		if self.finished:
-			self.pending_tasks.put(None)
+		for t in self.tasks.values():
+			t.update()
+			if t.is_pending:
+				self.pending_tasks.put(t)
+
 
 	@property
 	def finished(self):
@@ -87,17 +86,29 @@ class AbstractWorkflow(object):
 			raise errors.ParseError("Exactly one 'datasets' node expected")
 		dataset_nodes = datasets_nodes[0].xpath("./dataset")
 		
-		datasets = {}
+		datasets = dict()
 		for node in dataset_nodes:
-			datasets.update(dataset.Dataset.from_xml_node(node, dirname))
+			dataset_ = dataset.Dataset.from_xml_node(node, dirname)
+			id_ = dataset_.id
+			if id_ in datasets:
+				raise errors.ParseError("Dataset id {id} isn't unique".format(
+					id=id_
+				))
+			datasets[id_] = dataset_
 		
 		tasks_nodes = xml.xpath("/workflow/tasks")
 		if len(tasks_nodes) != 1:
 			raise errors.ParseError("Exactly one 'tasks' node expected")
 		task_nodes = tasks_nodes[0].xpath("./task")
 		
-		tasks = {}
+		tasks = dict()
 		for node in task_nodes:
-			tasks.update(task.Task.from_xml_node(node, datasets))
+			task_ = task.Task.from_xml_node(node, datasets)
+			id_ = task_.id
+			if id_ in tasks:
+				raise errors.ParseError("Task id {id} isn't unique".format(
+					id=id_
+				))
+			tasks[id_] = task_
 			
 		return AbstractWorkflow(datasets, tasks)
