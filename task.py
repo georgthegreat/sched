@@ -79,7 +79,6 @@ class Task(object):
 				available = lambda dataset_: self._datasets[dataset_].is_available
 				
 				if all(map(available, self.input_datasets)):
-					print("Marking {id} as pending".format(id=self._id))
 					self._status = TaskStatus.Pending
 		else:
 			self._status = new_status

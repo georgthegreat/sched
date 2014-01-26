@@ -25,8 +25,12 @@ class LocalScheduler(abstract.AbstractScheduler):
 		#synchonization primitives
 		#lock to guard self.running dictionary
 		self.running_lock = threading.Lock()
-		#semaphore to control the amount of process, running simultaneously
+		
+		#semaphore to control the amount of processes running simultaneously
 		self.running_semaphore = threading.Semaphore(self.CPU_COUNT)
+		
+		#semaphore to control if os.wait* wouldn't throw (i. e. there are child processes)
+		self.wait_semaphore = threading.Semaphore(0)
 
 		self.run_thread.start()		
 		self.wait_thread.start()
@@ -68,28 +72,20 @@ class LocalScheduler(abstract.AbstractScheduler):
 		while True:
 			task_data = self.tasks.get()
 			self.running_semaphore.acquire()
-
+			
 			pid = subprocess.Popen(task_data.command).pid
 			task_data.task_.update(task.TaskStatus.Running)
 			with self.running_lock:
 				print("Started program with pid {0}".format(pid))
 				self.running[pid] = task_data
+			self.wait_semaphore.release()
 
 	def wait(self):
 		while True:
-			print("Waiting")
-			try:
-				(pid, exit_status) = os.waitpid(-1, 0)
-				exit_status >>= 8
-			except OSError:
-				print("Got error")
-				#when wait is called, and there is no child processes
-				#OSError is being raised
-				#it's good to wait for sigwait, but it's unavailable before python-3.3
-				#signal.sigwait(signal.SIGCHILD)
-				import time
-				time.sleep(1)				
-				continue
+			self.wait_semaphore.acquire()
+			(pid, exit_status) = os.waitpid(-1, 0)
+			exit_status >>= 8
+		
 			
 			print("Wait program with pid {0}".format(pid))
 			#releasing resources allocated by
