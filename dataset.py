@@ -34,43 +34,63 @@ class Dataset(object):
 	"""
 	Class representing input or output dataset
 	"""
-	def __init__(self, id_, type_, path, description):
-		self._id = id_
-		self.type_ = type_
-		self.path = path
-		self.description = description
+	def __init__(self, id, type, path, description):
+		self._id = id
+		self._type = type
+		self._path = path
+		self._description = description
 		self._status = DatasetStatus.NotAvailable
+		
+		#number of output edges (i. e. number of tasks waiting for this dataset)
+		self._descendants = 0
 
-		if self.type_ == DatasetType.InputFile:
+		if self._type == DatasetType.InputFile:
 			self.update(DatasetStatus.Available)
 	
 	#class member properties
 	@property
 	def id(self):
 		return self._id
-		
+
 	#status access properties	
 	@property
 	def is_available(self):
 		return self._status == DatasetStatus.Available
-			
+		
+	#type access properties
+	@property
+	def is_temporary(self):
+		return self._type == DatasetType.TemporaryFile
+
+	def remove(self):
+		os.remove(self._path)
+		
+	def add_descendant(self, task):
+		self._descendants += 1
+		
+	def on_descendant_finished(self, task):
+		self._descendants -= 1
+		if (self._descendants == 0) and self.is_temporary:
+			self.remove()
+			self.update(DatasetStatus.Removed)
+		
 	def update(self, new_status):
 		"""
 		Updates self._status as needed.
 		Raises ValidationError if status isn't valid 
 		"""
-		if self.type_ == DatasetType.InputFile:
+		if self._type == DatasetType.InputFile:
 			if new_status == DatasetStatus.Available:
-				if not os.path.isfile(self.path):
+				if not os.path.isfile(self._path):
 					raise errors.ValidationError("Dataset of type [{0}] isn't accessible"\
-						.format(self.type_))
+						.format(self._type))
 			else:
 				raise errors.ValidationError("Dataset of type [{0}] got invalid status [{1}]"\
-					.format(self.type_, new_status))
-		elif self.type_ == DatasetType.OutputFile:
+					.format(self._type, new_status))
+		elif self._type == DatasetType.OutputFile:
 			if new_status == DatasetStatus.Removed:
 				raise errors.ValidationError("Dataset of type [{0}] got invalid status [{1}]"\
-					.format(self.type_, new_status))
+					.format(self._type, new_status))
 		else:
 			pass
 			
@@ -81,9 +101,9 @@ class Dataset(object):
 		"""
 		Returns single value dictionary (id -> Dataset)
 		"""
-		id_ = node.attrib["id"]
-		type_ = DatasetType.from_string(node.attrib["type"])
+		id = node.attrib["id"]
+		type = DatasetType.from_string(node.attrib["type"])
 		path = os.path.join(dirname, node.xpath("./path/text()")[0])
 		description = node.xpath("./description/text()")[0]
 
-		return Dataset(id_, type_, path, description)
+		return Dataset(id, type, path, description)

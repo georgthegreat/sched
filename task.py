@@ -34,19 +34,22 @@ class Task(object):
 	"""
 	ARG_REGEXP = re.compile("^\$([\w_][\w\d_]*)")
 
-	def __init__(self, datasets, id_, type_, path, input_datasets, output_datasets, description, args):
+	def __init__(self, datasets, id, type, _path, inputs, outputs, description, args):
 		self._datasets = datasets
 		
-		self._id = id_
-		self.type_ = type_
-		self.path = path
-		self.input_datasets = input_datasets
-		self.output_datasets = output_datasets
-		self.description = description
+		self._id = id
+		self._type = type
+		self._path = _path
+		self._inputs = inputs
+		self._outputs = outputs
+		self._description = description
 		self._status = TaskStatus.Waiting
 		self._datasets = datasets
+		self._args = args.split()
 		
-		self.args = args.split()
+		for id in inputs:
+			self._datasets[id].add_descendant(self)
+		
 	
 	#class member properties
 	@property
@@ -78,25 +81,28 @@ class Task(object):
 			if self.is_waiting:
 				available = lambda dataset_: self._datasets[dataset_].is_available
 				
-				if all(map(available, self.input_datasets)):
+				if all(map(available, self._inputs)):
 					self._status = TaskStatus.Pending
 		else:
 			self._status = new_status
 			if self.is_finished:
-				for id in self.output_datasets:
+				for id in self._outputs:
 					self._datasets[id].update(dataset.DatasetStatus.Available)
+					
+				for id in self._inputs:
+					self._datasets[id].on_descendant_finished(self)
 
 	def command_line(self):
 		"""
 		Returns list containing task as a command
 		"""
 		command = []
-		command.append(self.path)
-		for arg in self.args:
+		command.append(self._path)
+		for arg in self._args:
 			match = self.ARG_REGEXP.match(arg)
 			if match:
 				dataset_id = match.group(1)
-				command.append(self._datasets[dataset_id].path)
+				command.append(self._datasets[dataset_id]._path)
 			else:
 				command.append(arg)
 		return command		
@@ -106,8 +112,8 @@ class Task(object):
 		"""
 		Returns single value dictionary (id -> Task)
 		"""
-		id_ = node.attrib["id"]
-		type_ = TaskType.from_string(node.attrib["type"])
+		id = node.attrib["id"]
+		type = TaskType.from_string(node.attrib["type"])
 		path = node.xpath("./path/text()")[0]
 		description = node.xpath("./description/text()")[0]
 		command_args = node.xpath("./args/text()")[0]
@@ -115,15 +121,14 @@ class Task(object):
 		id_extractor = lambda node: node.attrib["id"]
 
 		inputs_nodes = node.xpath("./inputs/dataset")
-		input_datasets = set(map(id_extractor, inputs_nodes))
+		inputs = set(map(id_extractor, inputs_nodes))
 		
 		outputs_nodes = node.xpath("./outputs/dataset")
-		output_datasets = set(map(id_extractor, outputs_nodes))
+		outputs = set(map(id_extractor, outputs_nodes))
 		
-		if (len(input_datasets) == 0) and \
-			(len(output_datasets) == 0):
+		if (len(inputs) == 0) and (len(outputs) == 0):
 			raise errors.ParseError("Task {id} doesn't have any input or output datasets".format(
-				id=id_
+				id=id
 			))
 		
-		return Task(datasets, id_, type_, path, input_datasets, output_datasets, description, command_args)
+		return Task(datasets, id, type, path, inputs, outputs, description, command_args)
