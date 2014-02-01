@@ -32,8 +32,7 @@ class AbstractWorkflow(object):
 		Visits all tasks and updates their status.
 		Pushes new tasks into pending_tasks queue.
 		"""
-		if (task_ is not None) and \
-			(new_status is not None):
+		if task_ is not None:
 			task_.update(new_status)
 			if task_.is_finished or task_.is_failed:
 				self.unfinished_count -= 1			
@@ -43,6 +42,7 @@ class AbstractWorkflow(object):
 		for t in self.tasks.values():
 			t.update()
 			if t.is_pending:
+				t.update(task.TaskStatus.Enqueued)
 				self.pending_tasks.put(t)
 
 

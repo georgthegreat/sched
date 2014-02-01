@@ -23,9 +23,10 @@ class TaskType(object):
 class TaskStatus(object):
 	Waiting = 0
 	Pending = 1
-	Running = 2
-	Finished = 3
-	Failed = 4
+	Enqueued = 2
+	Running = 3
+	Finished = 4
+	Failed = 5
 
 
 class Task(object):
@@ -101,13 +102,18 @@ class Task(object):
 		for arg in self._args:
 			match = self.ARG_REGEXP.match(arg)
 			if match:
-				dataset_id = match.group(1)
-				command.append(self._datasets[dataset_id]._path)
+				id = match.group(1)
+				if (id not in self._inputs) and (id not in self._outputs):
+					raise RuntimeError("Can't use dataset id {id} in command line. It's neither input nor output dataset of task {task_id}".format(
+						id=id,
+						task_id=self._id
+					))
+				command.append(self._datasets[id]._path)
 			else:
 				command.append(arg)
 		return command		
 
-	@staticmethod	
+	@staticmethod
 	def from_xml_node(node, datasets):
 		"""
 		Returns single value dictionary (id -> Task)

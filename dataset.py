@@ -1,5 +1,6 @@
 #coding: utf-8
 import os
+import shutil
 
 import errors
 
@@ -7,11 +8,17 @@ class DatasetType(object):
 	InputFile = 0 
 	TemporaryFile = 1
 	OutputFile = 2
+	InputFolder = 3
+	TemporaryFolder = 4
+	OutputFolder = 5
 	
 	_dict = {
 		"input_file": InputFile,
 		"tmp_file": TemporaryFile,
-		"output_file": OutputFile
+		"output_file": OutputFile,
+		"input_folder": InputFolder,
+		"tmp_folder": TemporaryFolder,
+		"output_folder": OutputFolder
 	}
 		
 	@staticmethod
@@ -44,7 +51,7 @@ class Dataset(object):
 		#number of output edges (i. e. number of tasks waiting for this dataset)
 		self._descendants = 0
 
-		if self._type == DatasetType.InputFile:
+		if self.is_input:
 			self.update(DatasetStatus.Available)
 	
 	#class member properties
@@ -60,10 +67,49 @@ class Dataset(object):
 	#type access properties
 	@property
 	def is_temporary(self):
-		return self._type == DatasetType.TemporaryFile
+		return (
+			(self._type == DatasetType.TemporaryFile) or
+			(self._type == DatasetType.TemporaryFolder)
+		)
 
+	@property
+	def is_input(self):
+		return (
+			(self._type == DatasetType.InputFile) or
+			(self._type == DatasetType.InputFolder)
+		)
+		
+	@property
+	def is_output(self):
+		return (
+			(self._type == DatasetType.OutputFile) or
+			(self._type == DatasetType.OutputFolder)
+		)
+	
+	@property
+	def is_file(self):
+		return (
+			(self._type == DatasetType.InputFile) or
+			(self._type == DatasetType.TemporaryFile) or
+			(self._type == DatasetType.OutputFile)
+		)
+		
+	@property
+	def is_folder(self):
+		return (
+			(self._type == DatasetType.InputFolder) or
+			(self._type == DatasetType.TemporaryFolder) or
+			(self._type == DatasetType.OutputFolder)
+		)
+	
+	#instance methods
 	def remove(self):
-		os.remove(self._path)
+		if self.is_file:
+			os.remove(self._path)
+		elif self.is_folder:
+			shutil.rmtree(self._path)
+		else:
+			raise NotImplementedError("I don't know how to remove dataset")
 		
 	def add_descendant(self, task):
 		self._descendants += 1
@@ -79,15 +125,15 @@ class Dataset(object):
 		Updates self._status as needed.
 		Raises ValidationError if status isn't valid 
 		"""
-		if self._type == DatasetType.InputFile:
+		if self.is_input:
 			if new_status == DatasetStatus.Available:
-				if not os.path.isfile(self._path):
+				if not os.path.exists(self._path):
 					raise errors.ValidationError("Dataset of type [{0}] isn't accessible"\
 						.format(self._type))
 			else:
 				raise errors.ValidationError("Dataset of type [{0}] got invalid status [{1}]"\
 					.format(self._type, new_status))
-		elif self._type == DatasetType.OutputFile:
+		elif self.is_output:
 			if new_status == DatasetStatus.Removed:
 				raise errors.ValidationError("Dataset of type [{0}] got invalid status [{1}]"\
 					.format(self._type, new_status))

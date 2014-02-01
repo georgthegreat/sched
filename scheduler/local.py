@@ -76,7 +76,10 @@ class LocalScheduler(abstract.AbstractScheduler):
 			pid = subprocess.Popen(task_data.command).pid
 			task_data.task_.update(task.TaskStatus.Running)
 			with self.running_lock:
-				print("Started program with pid {0}".format(pid))
+				print("Started program with pid {pid} ({command}".format(
+					pid=pid,
+					command=task_data.command
+				))
 				self.running[pid] = task_data
 			self.wait_semaphore.release()
 
