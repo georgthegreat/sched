@@ -3,7 +3,7 @@
 import workflow
 import scheduler
 
-w = workflow.AbstractWorkflow.from_xml_file("examples/example.xml")
+w = workflow.AbstractWorkflow.from_xml_file("examples/copier/copier.xml")
 s = scheduler.LocalScheduler()
 
 s.schedule(w)
