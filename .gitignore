@@ -1,0 +1,115 @@
+# latest copy of this very magic .gitignore file can be downloaded from there:
+# https://github.com/georgthegreat/profile
+
+# win32 compiler output files and executables
+*.obj
+*.exe
+*.dll
+
+# unix compiler output files and executables
+*.o
+*.a
+*.so
+#.so.$version
+*.so.*
+
+# scriptable languages compiler output files and executables
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+
+# microsoft visual studio generated files
+*.aps
+*.idb
+*.ilk
+*.ipch
+*.exp
+*.filters
+*.lastbuildstate
+*.lib
+*.manifest
+*.ncb
+*.opensdf
+*.pdb
+*.sdf
+*.suo
+*.tlog
+*.user
+Debug
+Release
+UpgradeLog.XML
+_UpgradeReport_Files
+
+# archives: should be unpacked
+*.7z
+*.gz
+*.rar
+*.tgz
+*.zip
+# deb packages specific files (deb are like archives)
+*.deb
+*.dsc
+*.changes
+
+# log files
+*.log
+*.upload
+
+# configuration files
+*.ini
+*.cfg
+*.conf
+
+# debug files
+*.stackdump
+*.core
+
+# temporary editor files
+*.cache
+*.swp
+*.tmp
+*~
+
+#temporary unix files
+*.pid
+*.sock
+
+# latex specific files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.nav
+*.out
+*.snm
+*.toc
+*.run.xml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+
+# other version control system
+.svn
+.hg
+*.scc
+*.vssscc
+*.vspscc
+
+# make/automake/autoconfigure
+.deps
+.lib
+# de facto standard extension for additional makefile targets
+*.mk
+
+# GNU babel files
+*.mo
+*.pot
+
+# put your own ignores below this line (don't forget about new line in the end of file)
+*.hdr
+DSS*
+

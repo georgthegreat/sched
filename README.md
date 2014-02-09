@@ -1,4 +1,4 @@
 sched
 =====
 
-Yet another sientific workflow scheduler.
+Yet another scientific workflow scheduler.
