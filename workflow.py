@@ -103,7 +103,7 @@ class AbstractWorkflow(object):
 		
 		tasks = dict()
 		for node in task_nodes:
-			task_ = task.Task.from_xml_node(node, datasets)
+			task_ = task.Task.from_xml_node(node, datasets, dirname)
 			id_ = task_.id
 			if id_ in tasks:
 				raise errors.ParseError("Task id {id} isn't unique".format(

@@ -130,6 +130,8 @@
 				<dataset id="projected_dss2ir_table"/>
 			</outputs>
 			<args>$projected_dss2ir_folder $projected_dss2ir_table</args>
+			<stdout>logs/imgtable_dss2ir_projected.stdout.log</stdout>
+			<stderr>logs/imgtable_dss2ir_projected.stderr.log</stderr>
 		</task>
 		<task type="local" id="madd_dss2ir">
 			<description>Creates DSS2IR single fits-file</description>

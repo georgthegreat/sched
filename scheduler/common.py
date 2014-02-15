@@ -11,5 +11,13 @@ class TaskData(object):
 		return self._task.command_line
 		
 	@property
+	def stdout(self):
+		return self._task.stdout
+		
+	@property
+	def stderr(self):
+		return self._task.stderr
+		
+	@property
 	def task_(self):
 		return self._task

@@ -1,3 +1,4 @@
+import os.path
 import re
 
 import errors
@@ -35,7 +36,7 @@ class Task(object):
 	"""
 	ARG_REGEXP = re.compile("^\$([\w_][\w\d_]*)")
 
-	def __init__(self, datasets, id, type, _path, inputs, outputs, description, args):
+	def __init__(self, datasets, id, type, _path, inputs, outputs, description, args, stdout, stderr):
 		self._datasets = datasets
 		
 		self._id = id
@@ -48,6 +49,16 @@ class Task(object):
 		self._datasets = datasets
 		self._command_line = self.eval_command_line(args.split())
 		
+		self._stdout = stdout
+		if self._stdout is not None:
+			dirname = os.path.dirname(self._stdout)
+			os.makedirs(dirname, exist_ok=True)
+		
+		self._stderr = stderr
+		if self._stderr is not None:
+			dirname = os.path.dirname(self._stderr)
+			os.makedirs(dirname, exist_ok=True)
+		
 		for id in inputs:
 			self._datasets[id].add_descendant(self)
 		
@@ -56,6 +67,14 @@ class Task(object):
 	@property
 	def id(self):
 		return self._id
+		
+	@property
+	def stdout(self):
+		return self._stdout
+	
+	@property
+	def stderr(self):
+		return self._stderr
 	
 	#status access properties
 	@property
@@ -124,7 +143,7 @@ class Task(object):
 		return command		
 
 	@staticmethod
-	def from_xml_node(node, datasets):
+	def from_xml_node(node, datasets, dirname):
 		"""
 		Returns single value dictionary (id -> Task)
 		"""
@@ -146,5 +165,17 @@ class Task(object):
 			raise errors.ParseError("Task {id} doesn't have any input or output datasets".format(
 				id=id
 			))
-		
-		return Task(datasets, id, type, path, inputs, outputs, description, command_args)
+			
+		stdout = node.xpath("./stderr/text()")
+		if len(stdout) > 0:
+			stdout = os.path.join(dirname, stdout[0])
+		else:
+			stdout = None
+
+		stderr = node.xpath("./stdout/text()")
+		if len(stderr) > 0:
+			stderr = os.path.join(dirname, stderr[0])
+		else:
+			stderr = None
+			
+		return Task(datasets, id, type, path, inputs, outputs, description, command_args, stdout, stderr)

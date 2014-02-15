@@ -73,7 +73,25 @@ class LocalScheduler(abstract.AbstractScheduler):
 			task_data = self.tasks.get()
 			self.running_semaphore.acquire()
 			
-			pid = subprocess.Popen(task_data.command).pid
+			stdout = task_data.stdout
+			if stdout is not None:
+				stdout = open(stdout, "w")
+			else:
+				#TODO: replace with subprocess.DEVNULL in Python-3.3				
+				stdout = open(os.devnull, "w")
+				
+			stderr = task_data.stderr
+			if stderr is not None:
+				stderr = open(stderr, "w")
+			else:
+				#TODO: replace with subprocess.DEVNULL in Python-3.3
+				stderr = open(os.devnull, "w")
+
+			pid = subprocess.Popen(
+				args=task_data.command,
+				stdout=stdout,
+				stderr=stderr
+			).pid
 			task_data.task_.update(task.TaskStatus.Running)
 			with self.running_lock:
 				print("Started program with pid {pid} ({command}".format(
