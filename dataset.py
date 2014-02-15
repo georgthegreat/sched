@@ -41,7 +41,7 @@ class Dataset(object):
 	"""
 	Class representing input or output dataset
 	"""
-	def __init__(self, id, type, path, description):
+	def __init__(self, id, type, path, path_touch, description):
 		self._id = id
 		self._type = type
 		self._path = path
@@ -51,8 +51,12 @@ class Dataset(object):
 		#number of output edges (i. e. number of tasks waiting for this dataset)
 		self._descendants = 0
 
+		if path_touch:
+			self.touch()
+			
 		if self.is_input:
 			self.update(DatasetStatus.Available)
+			
 	
 	#class member properties
 	@property
@@ -101,6 +105,18 @@ class Dataset(object):
 			(self._type == DatasetType.TemporaryFolder) or
 			(self._type == DatasetType.OutputFolder)
 		)
+		
+	def touch(self):
+		"""
+		Creates empty dataset (file or folder)
+		"""
+		if self.is_file:
+			with open(self._path, "w") as file:
+				pass
+		elif self.is_folder:
+			os.makedirs(self._path, exist_ok=True)
+		else:
+			raise NotImplementedError("I don't know how to touch dataset")
 	
 	#instance methods
 	def remove(self):
@@ -149,7 +165,9 @@ class Dataset(object):
 		"""
 		id = node.attrib["id"]
 		type = DatasetType.from_string(node.attrib["type"])
-		path = os.path.join(dirname, node.xpath("./path/text()")[0])
+		path_node = node.xpath("./path")[0]
+		path_touch = (path_node.attrib.get("touch", "false") == "true")
+		path = os.path.join(dirname, path_node.text)
 		description = node.xpath("./description/text()")[0]
 
-		return Dataset(id, type, path, description)
+		return Dataset(id, type, path, path_touch, description)

@@ -13,7 +13,7 @@
 		</dataset>
 		<dataset type="tmp_folder" id="projected_dss2ir_folder">
 			<description>Projected DSS2IR Folder</description>
-			<path>DSS2IR/projected</path>
+			<path touch="true">DSS2IR/projected</path>
 		</dataset>
 		<dataset type="tmp_file" id="stats_dss2ir_table">
 			<description>Stats Table</description>
@@ -39,7 +39,7 @@
 		</dataset>
 		<dataset type="tmp_folder" id="projected_dss2r_folder">
 			<description>Projected DSS2R Folder</description>
-			<path>DSS2R/projected</path>
+			<path touch="true">DSS2R/projected</path>
 		</dataset>
 		<dataset type="tmp_file" id="stats_dss2r_table">
 			<description>Stats Table</description>
@@ -65,7 +65,7 @@
 		</dataset>
 		<dataset type="tmp_folder" id="projected_dss2b_folder">
 			<description>Projected DSS2B Folder</description>
-			<path>DSS2B/projected</path>
+			<path touch="true">DSS2B/projected</path>
 		</dataset>
 		<dataset type="tmp_file" id="stats_dss2b_table">
 			<description>Stats Table</description>
