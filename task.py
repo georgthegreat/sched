@@ -46,7 +46,7 @@ class Task(object):
 		self._description = description
 		self._status = TaskStatus.Waiting
 		self._datasets = datasets
-		self._args = args.split()
+		self._command_line = self.eval_command_line(args.split())
 		
 		for id in inputs:
 			self._datasets[id].add_descendant(self)
@@ -93,24 +93,34 @@ class Task(object):
 				for id in self._inputs:
 					self._datasets[id].on_descendant_finished(self)
 
+	@property
 	def command_line(self):
+		return self._command_line
+					
+	def eval_command_line(self, args):
 		"""
 		Returns list containing task as a command
 		"""
-		command = []
-		command.append(self._path)
-		for arg in self._args:
+		command = [self._path]
+		used_datasets = set()
+		expected_datasets = self._inputs | self._outputs
+		for arg in args:
 			match = self.ARG_REGEXP.match(arg)
 			if match:
 				id = match.group(1)
 				if (id not in self._inputs) and (id not in self._outputs):
-					raise RuntimeError("Can't use dataset id {id} in command line. It's neither input nor output dataset of task {task_id}".format(
+					raise errors.ValidationError("Can't use dataset id {id} in command line. It's neither input nor output dataset of task {task_id}".format(
 						id=id,
 						task_id=self._id
 					))
+				used_datasets.add(id)
 				command.append(self._datasets[id]._path)
 			else:
 				command.append(arg)
+		if used_datasets != expected_datasets:
+			raise errors.ValidationError("Not all datasets were used in command line of task {id}".format(
+				id=self._id
+			))
 		return command		
 
 	@staticmethod

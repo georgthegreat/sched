@@ -61,7 +61,7 @@ class LocalScheduler(abstract.AbstractScheduler):
 		while not workflow.finished:
 			task_ = workflow.get_pending_task()
 			if task_ is not None:
-				command = task_.command_line()
+				command = task_.command_line
 				task_data = common.TaskData(task_, callback)
 				self.tasks.put(task_data)
 

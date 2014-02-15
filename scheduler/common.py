@@ -8,7 +8,7 @@ class TaskData(object):
 		
 	@property
 	def command(self):
-		return self._task.command_line()
+		return self._task.command_line
 		
 	@property
 	def task_(self):
