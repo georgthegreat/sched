@@ -57,8 +57,8 @@ class LocalScheduler(abstract.AbstractScheduler):
 				workflow.update(task_data.task_, task.TaskStatus.Failed)
 			workflow.pending_tasks.task_done()
 			#TODO: call progress_func here
-			
-		while not workflow.finished:
+		
+		while not (workflow.finished or workflow.failed):
 			task_ = workflow.get_pending_task()
 			if task_ is not None:
 				command = task_.command_line
@@ -87,11 +87,18 @@ class LocalScheduler(abstract.AbstractScheduler):
 				#TODO: replace with subprocess.DEVNULL in Python-3.3
 				stderr = open(os.devnull, "w")
 
-			pid = subprocess.Popen(
-				args=task_data.command,
-				stdout=stdout,
-				stderr=stderr
-			).pid
+			try:
+				pid = subprocess.Popen(
+					args=task_data.command,
+					stdout=stdout,
+					stderr=stderr
+				).pid
+			except Exception:
+				# No such file
+				task_data.callback(task_data, constants.EXIT_STATUS_FAIL)
+				self.running_semaphore.release()
+				continue
+				
 			task_data.task_.update(task.TaskStatus.Running)
 			with self.running_lock:
 				print("Started program with pid {pid} ({command}".format(

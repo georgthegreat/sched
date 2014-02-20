@@ -4,7 +4,7 @@ def empty_progress_func(progress):
 class TaskData(object):
 	def __init__(self, task_, callback):
 		self._task = task_
-		self.callback = callback
+		self._callback = callback
 		
 	@property
 	def command(self):
@@ -21,3 +21,7 @@ class TaskData(object):
 	@property
 	def task_(self):
 		return self._task
+
+	@property
+	def callback(self):
+		return self._callback

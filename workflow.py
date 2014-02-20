@@ -21,8 +21,10 @@ class AbstractWorkflow(object):
 		"""
 		self.datasets = datasets
 		self.tasks = tasks
-		self.unfinished_count = len(tasks)
 		self.pending_tasks = queue.Queue()
+		
+		self.unfinished_count = len(tasks)
+		self.has_failed = False
 		
 		self.update()
 
@@ -32,6 +34,10 @@ class AbstractWorkflow(object):
 		Visits all tasks and updates their status.
 		Pushes new tasks into pending_tasks queue.
 		"""
+		if new_status == task.TaskStatus.Failed:
+			self.has_failed = True
+			self.pending_tasks.put(None)
+			
 		if task_ is not None:
 			task_.update(new_status)
 			if task_.is_finished or task_.is_failed:
@@ -49,6 +55,10 @@ class AbstractWorkflow(object):
 	@property
 	def finished(self):
 		return self.unfinished_count == 0
+		
+	@property
+	def failed(self):
+		return self.has_failed
 		
 	def get_pending_task(self):
 		return self.pending_tasks.get()
