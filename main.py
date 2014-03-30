@@ -3,8 +3,11 @@
 import workflow
 import scheduler
 
-w = workflow.AbstractWorkflow.from_xml_file("examples/montage/montage.xml")
+w = workflow.AbstractWorkflow.from_xml_file("examples/copier/copier.xml")
 s = scheduler.LocalScheduler()
 
 s.schedule(w)
-print("Schedule done")
+if w.failed:
+	print("Schedule failed")
+else:
+	print("Schedule completed successfully")

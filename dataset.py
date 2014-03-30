@@ -4,6 +4,9 @@ import shutil
 
 import errors
 
+DATASET_ID_PATTERN = "(?P<id>[\w_][\w\d_]*)"
+
+#TODO: use enum.Enum in Python-3.4
 class DatasetType(object):
 	InputFile = 0 
 	TemporaryFile = 1
@@ -31,6 +34,7 @@ class DatasetType(object):
 		return result
 
 
+#TODO: use enum.Enum in Python-3.4
 class DatasetStatus(object):
 	Available = 0
 	NotAvailable = 1
@@ -105,6 +109,10 @@ class Dataset(object):
 			(self._type == DatasetType.TemporaryFolder) or
 			(self._type == DatasetType.OutputFolder)
 		)
+		
+	@property
+	def path(self):
+		return self._path
 		
 	def touch(self):
 		"""

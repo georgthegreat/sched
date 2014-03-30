@@ -21,62 +21,68 @@
 		</dataset>
 		<dataset type="tmp_folder" id="tmp_folder">
 			<description>Temporary folder</description>
-			<path>tmp</path>
+			<path touch="true">tmp</path>
 		</dataset>
 		<dataset type="output_folder" id="output_folder">
 			<description>Copied folder</description>
-			<path>output_folder.tmp</path>
+			<path touch="true">output_folder.tmp</path>
 		</dataset>
 	</datasets>
 	
 	<!--Tasks described below-->	
 	<tasks>
-		<task type="local" id="data_copier_1">
+		<task id="data_copier_1">
 			<description>Simply copies data from input to output</description>
-			<path>cp</path>
 			<inputs>
 				<dataset id="input_dataset"/>
 			</inputs>
 			<outputs>
 				<dataset id="tmp_dataset"/>
 			</outputs>
-			<args>$input_dataset $tmp_dataset</args>
+			<commands>
+				<command type="local">cp $input_dataset $tmp_dataset</command>
+			</commands>
 		</task>
 		
-		<task type="local" id="data_copier_2">
+		<task id="data_copier_2">
 			<description>Simply copies data from input to output</description>
-			<path>cp</path>
 			<inputs>
 				<dataset id="tmp_dataset"/>
 			</inputs>
 			<outputs>
 				<dataset id="output_dataset"/>
 			</outputs>
-			<args>$tmp_dataset $output_dataset</args>
+			<commands>
+				<command type="local">cp $tmp_dataset $output_dataset</command>
+			</commands>
 		</task>
 		
 		<task type="local" id="data_copier_3">
 			<description>Simply copies data from input to output</description>
-			<path>cp</path>
 			<inputs>
 				<dataset id="input_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="tmp_folder"/>
 			</outputs>
-			<args>-r $input_folder $tmp_folder</args>
+			<commands>
+				<command type="local">cp -r $input_folder $tmp_folder</command>
+				<command type="file-divisible">cp #input_folder #tmp_folder</command>
+			</commands>
 		</task>
 		
 		<task type="local" id="data_copier_4">
 			<description>Simply copies data from input to output</description>
-			<path>cp</path>
 			<inputs>
 				<dataset id="tmp_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="output_folder"/>
 			</outputs>
-			<args>-r $tmp_folder $output_folder</args>
+			<commands>
+				<command type="local">cp -r $tmp_folder $output_folder</command>
+				<command type="file-divisible">cp #tmp_folder $output_folder</command>
+			</commands>
 		</task>
 	</tasks>
 </workflow>

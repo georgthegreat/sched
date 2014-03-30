@@ -1,26 +1,201 @@
-import os.path
+import os
 import re
 
 import errors
 import dataset
 
-class TaskType(object):
-	Local = 0
+ARG_REGEXP = re.compile("^(\$|#)" + dataset.DATASET_ID_PATTERN + "$")
+SIMPLE_ARG_REGEXP = re.compile("^\$" + dataset.DATASET_ID_PATTERN + "$")
+DIVISIBLE_ARG_REGEXP = re.compile("^#" + dataset.DATASET_ID_PATTERN + "$")
+
+class AbstractCommand(object):
+	"""
+	Class representing single executable command.
+	Any task contains one or more commands
+	(only one of which will be actually executed)
+	"""
+	def __init__(self, command, inputs, outputs):
+		self._command = command
+		self._args = self._command.split()
+		self._inputs = inputs
+		self._outputs = outputs
+		self._datasets = self._inputs | self._outputs
+		
+		if len(self._args) == 0:
+			raise errors.ValidationError("Command line can't be empty")
+		
+		if ARG_REGEXP.match(self._args[0]):
+			raise errors.ValidationError("First argument of command [{args}] must be executable, not dataset".format(
+				args=self._args.join(" ")
+			))
+			
+		#validating args to be present in self._datasets
+		ids = {
+			m.group("id")
+			for m in map(ARG_REGEXP.match, self._args)
+			if m
+		}
+		if ids != self._datasets:
+			if ids < self._datasets:
+				raise errors.ValidationError("Command [{command}] doesn't use datasets {datasets}".format(
+					command=self._command,
+					datasets=self._datasets - ids
+				))
+			elif ids > self._datasets:
+				raise error.ValidatinError("Command [{command}] make use of disallowed datasets {datasets}".format(
+					command=self._command,
+					datasets=self._datasets - ids
+				))
+		#validation done
+		
+	@property
+	def type(self):
+		return CommandType.Abstract
+		
+	def eval_args(self, datasets):
+		"""
+		Returns list containing list of command arguments
+		"""
+		raise NotImplemented()
+		
+	def estimate_args_count(self, datasets):
+		"""
+		Returns approximate number of processes in this command
+		"""
+		raise NotImplemented()
 	
+	@staticmethod
+	def from_xml_node(node, inputs, outputs):
+		type = CommandType.from_string(node.attrib["type"])
+		command = node.text
+		
+		return CommandType.type_to_class[type](command, inputs, outputs)
+
+class LocalCommand(AbstractCommand):
+	"""
+	Class representing local executable command
+	"""	
+	
+	def __init__(self, command, inputs, outputs):
+		super().__init__(command, inputs, outputs)
+	
+	@property
+	def type(self):
+		return CommandType.Local
+	
+	def eval_args(self, datasets):
+		if len(self._args) == 0:
+			raise errors.ValidationError("Got empty command line")
+		
+		total_args = []
+		current_args = []
+		
+		for arg in self._args:
+			match = SIMPLE_ARG_REGEXP.match(arg)
+			if match:
+				current_args.append(datasets[match.group("id")].path)
+			else:
+				current_args.append(arg)
+		
+		total_args.append(current_args)
+		return total_args
+		
+	def estimate_args_count(self, datasets):
+		#local command always consist of a single process
+		return 1
+
+		
+class FileDivisibleCommand(AbstractCommand):
+
+	def __init__(self, command, inputs, outputs):
+		super().__init__(command, inputs, outputs)
+		
+		#list of tuples (index, id) of datasets to divide task by
+		input_divisors = [
+			(index, m.group("id"))
+			for (index, m) in enumerate(map(DIVISIBLE_ARG_REGEXP.match, self._args))
+			if m and (m.group("id") in self._inputs)
+		]
+		
+		if len(input_divisors) != 1:
+			raise error.ValidationError("Divisible commands should be contain exactly one divisor (got {count} for [{args}]".format(
+				count=len(input_divisors),
+				args=self._command
+			))
+
+		self._divisor_index, self._divisor_id = input_divisors[0]
+		
+	@property
+	def type(self):
+		return CommandType.FileDivisible
+		
+	def eval_args(self, datasets):
+		if len(self._args) == 0:
+			raise errors.ValidationError("Got empty command line")
+		
+		dirname = datasets[self._divisor_id].path
+		joiner = lambda file: os.path.join(dirname, file)
+		files = map(joiner, os.listdir(dirname))
+		
+		total_args = []
+		for file in files:
+			current_args = []
+			for index, arg in enumerate(self._args):
+				#fill the command line
+				match_simple = SIMPLE_ARG_REGEXP.match(arg)
+				match_divisible = DIVISIBLE_ARG_REGEXP.match(arg)
+				if index == self._divisor_index:
+					current_args.append(file)
+				elif match_simple:
+					current_args.append(datasets[match_simple.group("id")].path)
+				elif match_divisible:
+					#divisible arg specified as non-divisor dataset
+					#using divisor basename as output filename
+					current_args.append(os.path.join(
+						datasets[match_divisible.group("id")].path,
+						os.path.basename(file)
+					))
+				else:
+					current_args.append(arg)
+
+			total_args.append(current_args)
+
+		return total_args
+			
+	def estimate_args_count(self, datasets):
+		"""
+		Returns number of files in divisor dataset 
+		(this is the number of args that will be produced by eval_args)
+		"""
+		return len(os.listdir(datasets[self._divisor_id].path))
+	
+
+#TODO: use enum.Enum in Python-3.4
+class CommandType(object):
+	Abstract = 0,
+	Local = 1,
+	FileDivisible = 2
+
 	_dict = {
-		"local": Local
+		"local": Local,
+		"file-divisible": FileDivisible
 	}
 	
 	@staticmethod
 	def from_string(value):
-		result = TaskType._dict.get(value, None)
+		result = CommandType._dict.get(value, None)
 		if result is None:
 			raise errors.ParseError("Unknown task type {value}".format(
 				value=value
 			))
 		return result
-
-
+		
+	type_to_class = {
+		Local: LocalCommand,
+		FileDivisible: FileDivisibleCommand
+	}
+	
+#TODO: use enum.Enum in Python-3.4
 class TaskStatus(object):
 	Waiting = 0
 	Pending = 1
@@ -34,20 +209,23 @@ class Task(object):
 	"""
 	Class representing single workflow task
 	"""
-	ARG_REGEXP = re.compile("^\$([\w_][\w\d_]*)")
-
-	def __init__(self, datasets, id, type, _path, inputs, outputs, description, args, stdout, stderr):
+	def __init__(self, datasets, id, inputs, outputs, description, stdout, stderr, commands):
 		self._datasets = datasets
 		
 		self._id = id
-		self._type = type
-		self._path = _path
 		self._inputs = inputs
 		self._outputs = outputs
 		self._description = description
 		self._status = TaskStatus.Waiting
 		self._datasets = datasets
-		self._command_line = self.eval_command_line(args.split())
+		
+		self._commands = {}
+		for command in commands:
+			if command.type in self._commands:
+				raise ValidationError("Got more than one command with type {type}".format(
+					type=command.type
+				))
+			self._commands[command.type] = command
 		
 		self._stdout = stdout
 		if self._stdout is not None:
@@ -59,6 +237,16 @@ class Task(object):
 			dirname = os.path.dirname(self._stderr)
 			os.makedirs(dirname, exist_ok=True)
 		
+		if (len(self._inputs) == 0) and (len(self._outputs) == 0):
+			raise errors.ValidationError("Task {id} doesn't have any input or output datasets".format(
+				id=self._id
+			))
+		
+		if len(self._commands) == 0:
+			raise errors.ValidationError("Task {id} doesn't have any commands defined".format(
+				id=self._id
+			))
+			
 		for id in inputs:
 			self._datasets[id].add_descendant(self)
 		
@@ -113,34 +301,8 @@ class Task(object):
 					self._datasets[id].on_descendant_finished(self)
 
 	@property
-	def command_line(self):
-		return self._command_line
-					
-	def eval_command_line(self, args):
-		"""
-		Returns list containing task as a command
-		"""
-		command = [self._path]
-		used_datasets = set()
-		expected_datasets = self._inputs | self._outputs
-		for arg in args:
-			match = self.ARG_REGEXP.match(arg)
-			if match:
-				id = match.group(1)
-				if (id not in self._inputs) and (id not in self._outputs):
-					raise errors.ValidationError("Can't use dataset id {id} in command line. It's neither input nor output dataset of task {task_id}".format(
-						id=id,
-						task_id=self._id
-					))
-				used_datasets.add(id)
-				command.append(self._datasets[id]._path)
-			else:
-				command.append(arg)
-		if used_datasets != expected_datasets:
-			raise errors.ValidationError("Not all datasets were used in command line of task {id}".format(
-				id=self._id
-			))
-		return command		
+	def commands(self):
+		return self._commands
 
 	@staticmethod
 	def from_xml_node(node, datasets, dirname):
@@ -148,10 +310,7 @@ class Task(object):
 		Returns single value dictionary (id -> Task)
 		"""
 		id = node.attrib["id"]
-		type = TaskType.from_string(node.attrib["type"])
-		path = node.xpath("./path/text()")[0]
 		description = node.xpath("./description/text()")[0]
-		command_args = node.xpath("./args/text()")[0]
 		
 		id_extractor = lambda node: node.attrib["id"]
 
@@ -160,11 +319,6 @@ class Task(object):
 		
 		outputs_nodes = node.xpath("./outputs/dataset")
 		outputs = set(map(id_extractor, outputs_nodes))
-		
-		if (len(inputs) == 0) and (len(outputs) == 0):
-			raise errors.ParseError("Task {id} doesn't have any input or output datasets".format(
-				id=id
-			))
 			
 		stdout = node.xpath("./stderr/text()")
 		if len(stdout) > 0:
@@ -178,4 +332,9 @@ class Task(object):
 		else:
 			stderr = None
 			
-		return Task(datasets, id, type, path, inputs, outputs, description, command_args, stdout, stderr)
+		command_nodes = node.xpath("./commands/command")
+		commands = []
+		for command_node in command_nodes:
+			commands.append(AbstractCommand.from_xml_node(command_node, inputs, outputs))
+
+		return Task(datasets, id, inputs, outputs, description, stdout, stderr, commands)

@@ -95,20 +95,20 @@
 	<!--Tasks described below-->	
 	<tasks>
 		<!-- DSS2IR (infra-red) tasks -->
-		<task type="local" id="imgtable_dss2ir_raw">
+		<task id="imgtable_dss2ir_raw">
 			<description>Creates image table for DSS2IR</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="raw_dss2ir_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="raw_dss2ir_table"/>
 			</outputs>
-			<args>$raw_dss2ir_folder $raw_dss2ir_table</args>
+			<commands>
+				<command type="local">mImgtbl $raw_dss2ir_folder $raw_dss2ir_table</command>
+			</commands>
 		</task>
-		<task type="local" id="mprojexec_dss2ir">
+		<task id="mprojexec_dss2ir">
 			<description>Reprojects images table</description>
-			<path>mProjExec</path>
 			<inputs>
 				<dataset id="raw_dss2ir_folder"/>
 				<dataset id="raw_dss2ir_table"/>
@@ -118,24 +118,26 @@
 				<dataset id="projected_dss2ir_folder"/>
 				<dataset id="stats_dss2ir_table"/>
 			</outputs>
-			<args>-p $raw_dss2ir_folder $raw_dss2ir_table $header $projected_dss2ir_folder $stats_dss2ir_table</args>
+			<commands>
+				<command type="local">mProjExec -p $raw_dss2ir_folder $raw_dss2ir_table $header $projected_dss2ir_folder $stats_dss2ir_table</command>
+			</commands>
 		</task>
-		<task type="local" id="imgtable_dss2ir_projected">
+		<task id="imgtable_dss2ir_projected">
 			<description>Creates projected image table</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="projected_dss2ir_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="projected_dss2ir_table"/>
 			</outputs>
-			<args>$projected_dss2ir_folder $projected_dss2ir_table</args>
 			<stdout>logs/imgtable_dss2ir_projected.stdout.log</stdout>
 			<stderr>logs/imgtable_dss2ir_projected.stderr.log</stderr>
+			<commands>
+				<command type="local">mImgtbl $projected_dss2ir_folder $projected_dss2ir_table</command>
+			</commands>
 		</task>
-		<task type="local" id="madd_dss2ir">
+		<task id="madd_dss2ir">
 			<description>Creates DSS2IR single fits-file</description>
-			<path>mAdd</path>
 			<inputs>
 				<dataset id="projected_dss2ir_folder"/>
 				<dataset id="projected_dss2ir_table"/>
@@ -144,23 +146,25 @@
 			<outputs>
 				<dataset id="joined_dss2ir"/>
 			</outputs>
-			<args>-p $projected_dss2ir_folder $projected_dss2ir_table $header $joined_dss2ir</args>
+			<commands>
+				<command type="local">mAdd -p $projected_dss2ir_folder $projected_dss2ir_table $header $joined_dss2ir</command>
+			</commands>
 		</task>
 		<!-- DSS2R (red) tasks -->
-		<task type="local" id="imgtable_dss2r_raw">
+		<task id="imgtable_dss2r_raw">
 			<description>Creates image table for DSS2R</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="raw_dss2r_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="raw_dss2r_table"/>
 			</outputs>
-			<args>$raw_dss2r_folder $raw_dss2r_table</args>
+			<commands>
+				<command type="local">mImgtbl $raw_dss2r_folder $raw_dss2r_table</command>
+			</commands>
 		</task>		
-		<task type="local" id="mprojexec_dss2r">
+		<task id="mprojexec_dss2r">
 			<description>Reprojects images table</description>
-			<path>mProjExec</path>
 			<inputs>
 				<dataset id="raw_dss2r_folder"/>
 				<dataset id="raw_dss2r_table"/>
@@ -170,22 +174,24 @@
 				<dataset id="projected_dss2r_folder"/>
 				<dataset id="stats_dss2r_table"/>
 			</outputs>
-			<args>-p $raw_dss2r_folder $raw_dss2r_table $header $projected_dss2r_folder $stats_dss2r_table</args>
+			<commands>
+				<command type="local">mProjExec -p $raw_dss2r_folder $raw_dss2r_table $header $projected_dss2r_folder $stats_dss2r_table</command>
+			</commands>
 		</task>
-		<task type="local" id="imgtable_dss2r_projected">
+		<task id="imgtable_dss2r_projected">
 			<description>Creates projected image table</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="projected_dss2r_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="projected_dss2r_table"/>
 			</outputs>
-			<args>$projected_dss2r_folder $projected_dss2r_table</args>
+			<commands>
+				<command type="local">mImgtbl $projected_dss2r_folder $projected_dss2r_table</command>
+			</commands>
 		</task>
-		<task type="local" id="madd_dss2r">
+		<task id="madd_dss2r">
 			<description>Creates DSS2R single fits-file</description>
-			<path>mAdd</path>
 			<inputs>
 				<dataset id="projected_dss2r_folder"/>
 				<dataset id="projected_dss2r_table"/>
@@ -194,22 +200,25 @@
 			<outputs>
 				<dataset id="joined_dss2r"/>
 			</outputs>
-			<args>-p $projected_dss2r_folder $projected_dss2r_table $header $joined_dss2r</args>
+			<commands>
+				<command type="local">mAdd -p $projected_dss2r_folder $projected_dss2r_table $header $joined_dss2r</command>
+			</commands>
 		</task>
 		
 		<!-- DSS2B (blue) tasks -->
-		<task type="local" id="imgtable_dss2b_raw">
+		<task id="imgtable_dss2b_raw">
 			<description>Creates image table for DSS2B</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="raw_dss2b_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="raw_dss2b_table"/>
 			</outputs>
-			<args>$raw_dss2b_folder $raw_dss2b_table</args>
+			<commands>
+				<command type="local">mImgtbl $raw_dss2b_folder $raw_dss2b_table</command>
+			</commands>
 		</task>
-		<task type="local" id="mprojexec_dss2b">
+		<task id="mprojexec_dss2b">
 			<description>Reprojects images table</description>
 			<path>mProjExec</path>
 			<inputs>
@@ -221,22 +230,24 @@
 				<dataset id="projected_dss2b_folder"/>
 				<dataset id="stats_dss2b_table"/>
 			</outputs>
-			<args>-p $raw_dss2b_folder $raw_dss2b_table $header $projected_dss2b_folder $stats_dss2b_table</args>
+			<commands>
+				<command type="local">-p $raw_dss2b_folder $raw_dss2b_table $header $projected_dss2b_folder $stats_dss2b_table</command>
+			</commands>
 		</task>
-		<task type="local" id="imgtable_dss2b_projected">
+		<task id="imgtable_dss2b_projected">
 			<description>Creates projected image table</description>
-			<path>mImgtbl</path>
 			<inputs>
 				<dataset id="projected_dss2b_folder"/>
 			</inputs>
 			<outputs>
 				<dataset id="projected_dss2b_table"/>
 			</outputs>
-			<args>$projected_dss2b_folder $projected_dss2b_table</args>
+			<commands>
+				<command type="local">mImgtbl $projected_dss2b_folder $projected_dss2b_table</command>
+			</commands>
 		</task>
-		<task type="local" id="madd_dss2b">
+		<task id="madd_dss2b">
 			<description>Creates DSS2B single fits-file</description>
-			<path>mAdd</path>
 			<inputs>
 				<dataset id="projected_dss2b_folder"/>
 				<dataset id="projected_dss2b_table"/>
@@ -245,13 +256,14 @@
 			<outputs>
 				<dataset id="joined_dss2b"/>
 			</outputs>
-			<args>-p $projected_dss2b_folder $projected_dss2b_table $header $joined_dss2b</args>
+			<commands>
+				<command type="local">mAdd -p $projected_dss2b_folder $projected_dss2b_table $header $joined_dss2b</command>
+			</commands>
 		</task>
 		
 		<!-- General tasks -->
-		<task type="local" id="mjpeg">
+		<task id="mjpeg">
 			<description>Creates DSS2B single fits-file</description>
-			<path>mJPEG</path>
 			<inputs>
 				<dataset id="joined_dss2ir"/>
 				<dataset id="joined_dss2r"/>
@@ -260,12 +272,15 @@
 			<outputs>
 				<dataset id="rasterized"/>
 			</outputs>
-			<args>
-				-blue $joined_dss2b -1s 99.999% gaussian-log 
-				-green $joined_dss2r -1s 99.999% gaussian-log 
-				-red $joined_dss2ir -1s 99.999% gaussian-log 
-				-out $rasterized
-			</args>
+			<commands>
+				<command type="local">
+					mJPEG
+					-blue $joined_dss2b -1s 99.999% gaussian-log 
+					-green $joined_dss2r -1s 99.999% gaussian-log 
+					-red $joined_dss2ir -1s 99.999% gaussian-log 
+					-out $rasterized
+				</command>
+			</commands>
 		</task>
 	</tasks>
 </workflow>
