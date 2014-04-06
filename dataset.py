@@ -122,7 +122,8 @@ class Dataset(object):
 			with open(self._path, "w") as file:
 				pass
 		elif self.is_folder:
-			os.makedirs(self._path, exist_ok=True)
+			if not os.path.isdir(self._path):
+				os.makedirs(self._path, exist_ok=True)
 		else:
 			raise NotImplementedError("I don't know how to touch dataset")
 	

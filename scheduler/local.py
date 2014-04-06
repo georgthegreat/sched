@@ -1,7 +1,6 @@
 import multiprocessing
 import os
 import queue
-import signal
 import subprocess
 import threading
 
@@ -80,6 +79,7 @@ class LocalScheduler(abstract.AbstractScheduler):
 			if exit_status == constants.EXIT_STATUS_OK:
 				workflow.update(task_data.task, task.TaskStatus.Finished)
 			else:
+				print("Task {id} failed".format(id=task_data.id))
 				workflow.update(task_data.task, task.TaskStatus.Failed)
 			#TODO: call progress_func here
 			
@@ -92,6 +92,7 @@ class LocalScheduler(abstract.AbstractScheduler):
 				if task_data.finished == task_data.swarm_size:
 					workflow.update(task_data.task, task.TaskStatus.Finished)
 			else:
+				print("Task {id} failed".format(id=task_data.id))
 				workflow.update(task_data.task, task.TaskStatus.Failed)
 			#TODO: call progress_func here
 		
@@ -128,14 +129,14 @@ class LocalScheduler(abstract.AbstractScheduler):
 			
 			stdout = task_data.stdout
 			if stdout is not None:
-				stdout = open(stdout, "w")
+				stdout = open(stdout, "a")
 			else:
 				#TODO: replace with subprocess.DEVNULL in Python-3.3				
 				stdout = open(os.devnull, "w")
 				
 			stderr = task_data.stderr
 			if stderr is not None:
-				stderr = open(stderr, "w")
+				stderr = open(stderr, "a")
 			else:
 				#TODO: replace with subprocess.DEVNULL in Python-3.3
 				stderr = open(os.devnull, "w")

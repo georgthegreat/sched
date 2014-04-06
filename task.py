@@ -28,24 +28,18 @@ class AbstractCommand(object):
 			raise errors.ValidationError("First argument of command [{args}] must be executable, not dataset".format(
 				args=self._args.join(" ")
 			))
-			
+
 		#validating args to be present in self._datasets
 		ids = {
 			m.group("id")
 			for m in map(ARG_REGEXP.match, self._args)
 			if m
 		}
-		if ids != self._datasets:
-			if ids < self._datasets:
-				raise errors.ValidationError("Command [{command}] doesn't use datasets {datasets}".format(
-					command=self._command,
-					datasets=self._datasets - ids
-				))
-			elif ids > self._datasets:
-				raise error.ValidatinError("Command [{command}] make use of disallowed datasets {datasets}".format(
-					command=self._command,
-					datasets=self._datasets - ids
-				))
+		if ids > self._datasets:
+			raise errors.ValidatinError("Command [{command}] make use of disallowed datasets {datasets}".format(
+				command=self._command,
+				datasets=self._datasets - ids
+			))
 		#validation done
 		
 	@property
@@ -118,7 +112,7 @@ class FileDivisibleCommand(AbstractCommand):
 		]
 		
 		if len(input_divisors) != 1:
-			raise error.ValidationError("Divisible commands should be contain exactly one divisor (got {count} for [{args}]".format(
+			raise errors.ValidationError("Divisible commands should be contain exactly one divisor (got {count} for [{args}]".format(
 				count=len(input_divisors),
 				args=self._command
 			))
@@ -222,7 +216,7 @@ class Task(object):
 		self._commands = {}
 		for command in commands:
 			if command.type in self._commands:
-				raise ValidationError("Got more than one command with type {type}".format(
+				raise errors.ValidationError("Got more than one command with type {type}".format(
 					type=command.type
 				))
 			self._commands[command.type] = command
@@ -230,12 +224,14 @@ class Task(object):
 		self._stdout = stdout
 		if self._stdout is not None:
 			dirname = os.path.dirname(self._stdout)
-			os.makedirs(dirname, exist_ok=True)
+			if not os.path.isdir(dirname):
+				os.makedirs(dirname, exist_ok=True)
 		
 		self._stderr = stderr
 		if self._stderr is not None:
 			dirname = os.path.dirname(self._stderr)
-			os.makedirs(dirname, exist_ok=True)
+			if not os.path.isdir(dirname):
+				os.makedirs(dirname, exist_ok=True)
 		
 		if (len(self._inputs) == 0) and (len(self._outputs) == 0):
 			raise errors.ValidationError("Task {id} doesn't have any input or output datasets".format(

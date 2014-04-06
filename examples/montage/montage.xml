@@ -118,8 +118,11 @@
 				<dataset id="projected_dss2ir_folder"/>
 				<dataset id="stats_dss2ir_table"/>
 			</outputs>
+			<stdout>logs/mprojexec_dss2ir.stdout.log</stdout>
+			<stderr>logs/mprojexec_dss2ir.stderr.log</stderr>
 			<commands>
 				<command type="local">mProjExec -p $raw_dss2ir_folder $raw_dss2ir_table $header $projected_dss2ir_folder $stats_dss2ir_table</command>
+				<command type="file-divisible">mProjectPP #raw_dss2ir_folder #projected_dss2ir_folder $header</command>
 			</commands>
 		</task>
 		<task id="imgtable_dss2ir_projected">
@@ -174,8 +177,11 @@
 				<dataset id="projected_dss2r_folder"/>
 				<dataset id="stats_dss2r_table"/>
 			</outputs>
+			<stdout>logs/mprojexec_dss2r.stdout.log</stdout>
+			<stderr>logs/mprojexec_dss2r.stderr.log</stderr>
 			<commands>
 				<command type="local">mProjExec -p $raw_dss2r_folder $raw_dss2r_table $header $projected_dss2r_folder $stats_dss2r_table</command>
+				<command type="file-divisible">mProjectPP #raw_dss2r_folder #projected_dss2r_folder $header</command>
 			</commands>
 		</task>
 		<task id="imgtable_dss2r_projected">
@@ -230,8 +236,11 @@
 				<dataset id="projected_dss2b_folder"/>
 				<dataset id="stats_dss2b_table"/>
 			</outputs>
+			<stdout>logs/mprojexec_dss2b.stdout.log</stdout>
+			<stderr>logs/mprojexec_dss2b.stderr.log</stderr>
 			<commands>
 				<command type="local">-p $raw_dss2b_folder $raw_dss2b_table $header $projected_dss2b_folder $stats_dss2b_table</command>
+				<command type="file-divisible">mProjectPP #raw_dss2b_folder #projected_dss2b_folder $header</command>
 			</commands>
 		</task>
 		<task id="imgtable_dss2b_projected">
