@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 
@@ -63,14 +64,14 @@ class AbstractCommand(object):
 		type = CommandType.from_string(node.attrib["type"])
 		command = node.text
 		
-		return CommandType.type_to_class[type](command, inputs, outputs)
+		return CommandType.type_to_class[type](command, inputs, outputs, **node.attrib)
 
 class LocalCommand(AbstractCommand):
 	"""
 	Class representing local executable command
 	"""	
 	
-	def __init__(self, command, inputs, outputs):
+	def __init__(self, command, inputs, outputs, **attrib):
 		super().__init__(command, inputs, outputs)
 	
 	@property
@@ -101,7 +102,7 @@ class LocalCommand(AbstractCommand):
 		
 class FileDivisibleCommand(AbstractCommand):
 
-	def __init__(self, command, inputs, outputs):
+	def __init__(self, command, inputs, outputs, **attrib):
 		super().__init__(command, inputs, outputs)
 		
 		#list of tuples (index, id) of datasets to divide task by
@@ -116,6 +117,8 @@ class FileDivisibleCommand(AbstractCommand):
 				count=len(input_divisors),
 				args=self._command
 			))
+			
+		self._glob = attrib.get("glob", "*")
 
 		self._divisor_index, self._divisor_id = input_divisors[0]
 		
@@ -128,11 +131,9 @@ class FileDivisibleCommand(AbstractCommand):
 			raise errors.ValidationError("Got empty command line")
 		
 		dirname = datasets[self._divisor_id].path
-		joiner = lambda file: os.path.join(dirname, file)
-		files = map(joiner, os.listdir(dirname))
 		
 		total_args = []
-		for file in files:
+		for file in glob.iglob(os.path.join(dirname, self._glob)):
 			current_args = []
 			for index, arg in enumerate(self._args):
 				#fill the command line
@@ -153,7 +154,12 @@ class FileDivisibleCommand(AbstractCommand):
 					current_args.append(arg)
 
 			total_args.append(current_args)
-
+			
+		if len(total_args) == 0:
+			raise error.ValidationError("Command [{args}] can't be divideds".format(
+				args=self._command
+			))
+			
 		return total_args
 			
 	def estimate_args_count(self, datasets):
