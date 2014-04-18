@@ -125,7 +125,7 @@ class Dataset(object):
 			if not os.path.isdir(self._path):
 				os.makedirs(self._path, exist_ok=True)
 		else:
-			raise NotImplementedError("I don't know how to touch dataset")
+			raise NotImplementedError()
 	
 	#instance methods
 	def remove(self):
@@ -134,7 +134,7 @@ class Dataset(object):
 		elif self.is_folder:
 			shutil.rmtree(self._path)
 		else:
-			raise NotImplementedError("I don't know how to remove dataset")
+			raise NotImplementedError()
 		
 	def add_descendant(self, task):
 		self._descendants += 1

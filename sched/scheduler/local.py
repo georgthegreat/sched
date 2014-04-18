@@ -15,7 +15,7 @@ class LocalScheduler(abstract.AbstractScheduler):
 	SUPPORTED_COMMAND_TYPES = {task.CommandType.Local, task.CommandType.FileDivisible}
 
 	def __init__(self):
-		self.tasks = queue.Queue(self.CPU_COUNT)
+		self.tasks = queue.Queue()
 
 		self.run_thread = threading.Thread(target=self.run)
 		self.run_thread.daemon = True
@@ -73,35 +73,23 @@ class LocalScheduler(abstract.AbstractScheduler):
 		"""
 		Runs in a separate thread, performs single workflow scheduling
 		"""
-		def local_callback(task_data, exit_status):
+		def callback(task_data, exit_status):
 			print("Within local_callback for {id}".format(
 				id=task_data.id
 			))
 			if exit_status == constants.EXIT_STATUS_OK:
-				workflow.update(task_data.task, task.TaskStatus.Finished)
-			else:
-				print("Task {id} failed".format(id=task_data.id))
-				workflow.update(task_data.task, task.TaskStatus.Failed)
-			#TODO: call progress_func here
-			
-		def file_divisible_callback(task_data, exit_status):
-			print("Within file_divisible_callback for {id}".format(
-				id=task_data.id
-			))
-			if exit_status == constants.EXIT_STATUS_OK:
-				task_data.finished = task_data.finished + 1
-				if task_data.finished == task_data.swarm_size:
+				if (task_data.unfinished_count == 0):
 					workflow.update(task_data.task, task.TaskStatus.Finished)
 			else:
-				print("Task {id} failed".format(id=task_data.id))
-				workflow.update(task_data.task, task.TaskStatus.Failed)
+				task_data.fail_count += 1
+				if (task_data.fail_count < config.scheduler.reschedule_attempts):
+					print("Task {id} failed. Rescheduling".format(id=task_data.id))
+					self.tasks.put(task_data)
+				else:
+					print("Task {id} failed. Marking workflow as failed".format(id=task_data.id))
+					workflow.update(task_data.task, task.TaskStatus.Failed)
 			#TODO: call progress_func here
-		
-		COMMAND_TYPE_TO_CALLBACK = {
-			task.CommandType.Local: local_callback,
-			task.CommandType.FileDivisible: file_divisible_callback
-		}
-		
+
 		while not (workflow.finished or workflow.failed):
 			task_ = workflow.get_pending_task()
 			if task_ is not None:
@@ -115,9 +103,10 @@ class LocalScheduler(abstract.AbstractScheduler):
 				
 				command = self.choose_command(task_, workflow.datasets)
 				total_args = command.eval_args(workflow.datasets)
-				callback = COMMAND_TYPE_TO_CALLBACK[command.type]
-				task_data = common.TaskData(task_, total_args, len(total_args), callback)
-				for current_args in total_args:
+				#using semaphore as shared counter
+				unfinished_count = threading.Semaphore(len(total_args))
+				for args in total_args:
+					task_data = common.TaskData(task_, args, unfinished_count, callback)
 					self.tasks.put(task_data)
 
 	def run(self):

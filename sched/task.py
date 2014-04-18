@@ -51,13 +51,13 @@ class AbstractCommand(object):
 		"""
 		Returns list containing list of command arguments
 		"""
-		raise NotImplemented()
+		raise NotImplementedError()
 		
 	def estimate_args_count(self, datasets):
 		"""
 		Returns approximate number of processes in this command
 		"""
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	@staticmethod
 	def from_xml_node(node, inputs, outputs):

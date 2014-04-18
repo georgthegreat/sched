@@ -5,35 +5,37 @@ class TaskData(object):
 	"""
 	Auxiliary class to be used within schedulers
 	"""
-	def __init__(self, task_, args, swarm_size, callback):
+	def __init__(self, task_, args, unfinished_count, callback):
 		self._task = task_
 		self._callback = callback
 		self._args = args
-		self._args_index = 0
-		self._finished = 0
-		self._swarm_size = swarm_size
+		
+		self._unfinished_count = unfinished_count
+		self._fail_count = 0
 
 	@property
-	def finished(self):
-		return self._finished
-	
-	@finished.setter
-	def finished(self, value):
-		self._finished = value
-	
+	def unfinished_count(self):
+		"""
+		When task was divided into multiple subtasks, this property 
+		is the number of unfinished tasks in a swarm
+		"""
+		return self._unfinished_count._value
+		
 	@property
-	def swarm_size(self):	
-		return self._swarm_size
+	def fail_count(self):
+		return self._fail_count
+	
+	@fail_count.setter
+	def fail_count(self, value):
+		self._fail_count = value
 		
 	@property
 	def args(self):
 		"""
 		Function returning subsequent args from self._args
 		"""
-		args = self._args[self._args_index]
-		self._args_index += 1
-		return args
-		
+		return self._args
+			
 	@property
 	def stdout(self):
 		return self._task.stdout
