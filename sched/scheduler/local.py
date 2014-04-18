@@ -4,10 +4,11 @@ import queue
 import subprocess
 import threading
 
-import constants
-import task
-from scheduler import abstract
-from scheduler import common
+from . import common
+from . import abstract
+from .. import constants
+from .. import task
+from ..config import config
 
 class LocalScheduler(abstract.AbstractScheduler):
 	CPU_COUNT = multiprocessing.cpu_count()

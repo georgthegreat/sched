@@ -2,7 +2,7 @@
 import os
 import shutil
 
-import errors
+from . import errors
 
 DATASET_ID_PATTERN = "(?P<id>[\w_][\w\d_]*)"
 
@@ -28,7 +28,7 @@ class DatasetType(object):
 	def from_string(value):		
 		result = DatasetType._dict.get(value, None)
 		if result is None:
-			raise errors.ParseError("Unknown dataset type {value}".format(
+			raise errors.XmlParseError("Unknown dataset type {value}".format(
 				value=value
 			))
 		return result

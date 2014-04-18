@@ -2,8 +2,8 @@ import glob
 import os
 import re
 
-import errors
-import dataset
+from . import errors
+from . import dataset
 
 ARG_REGEXP = re.compile("^(\$|#)" + dataset.DATASET_ID_PATTERN + "$")
 SIMPLE_ARG_REGEXP = re.compile("^\$" + dataset.DATASET_ID_PATTERN + "$")
@@ -185,7 +185,7 @@ class CommandType(object):
 	def from_string(value):
 		result = CommandType._dict.get(value, None)
 		if result is None:
-			raise errors.ParseError("Unknown task type {value}".format(
+			raise errors.XmlParseError("Unknown task type {value}".format(
 				value=value
 			))
 		return result

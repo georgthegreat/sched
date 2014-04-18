@@ -1,4 +1,4 @@
-from scheduler import common
+from . import common
 
 class AbstractScheduler(object):
 	

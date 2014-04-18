@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import workflow
-import scheduler
+from sched import workflow
+from sched import scheduler
 
 w = workflow.AbstractWorkflow.from_xml_file("examples/copier/copier.xml")
 #w = workflow.AbstractWorkflow.from_xml_file("examples/montage/montage.xml")

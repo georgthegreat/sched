@@ -4,9 +4,9 @@ import queue
 
 from lxml import etree
 
-import dataset
-import errors
-import task
+from . import dataset
+from . import errors
+from . import task
 
 # Classes 
 class AbstractWorkflow(object):
@@ -93,7 +93,7 @@ class AbstractWorkflow(object):
 		
 		datasets_nodes = xml.xpath("/workflow/datasets")
 		if len(datasets_nodes) != 1:
-			raise errors.ParseError("Exactly one 'datasets' node expected")
+			raise errors.XmlParseError("Exactly one 'datasets' node expected")
 		dataset_nodes = datasets_nodes[0].xpath("./dataset")
 		
 		datasets = dict()
@@ -101,14 +101,14 @@ class AbstractWorkflow(object):
 			dataset_ = dataset.Dataset.from_xml_node(node, dirname)
 			id_ = dataset_.id
 			if id_ in datasets:
-				raise errors.ParseError("Dataset id {id} isn't unique".format(
+				raise errors.XmlParseError("Dataset id {id} isn't unique".format(
 					id=id_
 				))
 			datasets[id_] = dataset_
 		
 		tasks_nodes = xml.xpath("/workflow/tasks")
 		if len(tasks_nodes) != 1:
-			raise errors.ParseError("Exactly one 'tasks' node expected")
+			raise errors.XmlParseError("Exactly one 'tasks' node expected")
 		task_nodes = tasks_nodes[0].xpath("./task")
 		
 		tasks = dict()
@@ -116,7 +116,7 @@ class AbstractWorkflow(object):
 			task_ = task.Task.from_xml_node(node, datasets, dirname)
 			id_ = task_.id
 			if id_ in tasks:
-				raise errors.ParseError("Task id {id} isn't unique".format(
+				raise errors.XmlParseError("Task id {id} isn't unique".format(
 					id=id_
 				))
 			tasks[id_] = task_
