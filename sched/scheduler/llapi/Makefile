@@ -1,7 +1,7 @@
 PYVERSION = 3.4m
 CPPFLAGS += -m64 -I/opt/ibmll/LoadL/full/include -I$(CHROOT)/usr/include/python$(PYVERSION) -Wall
 LDFLAGS += -m64 -lllapi -lboost_python -lpython$(PYVERSION)
-LIB = _loadleveler.so
+LIB = _llapi.so
 CXX = g++
 
 MODS = \

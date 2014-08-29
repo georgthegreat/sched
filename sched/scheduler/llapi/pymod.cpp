@@ -35,7 +35,7 @@ boost::shared_ptr<SubmitInfo> makeSubmitInfo(
 
 }
 
-BOOST_PYTHON_MODULE(_loadleveler)
+BOOST_PYTHON_MODULE(_llapi)
 {
 	using namespace boost::python;
 	using namespace llapi;
