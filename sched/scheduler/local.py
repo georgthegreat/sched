@@ -78,10 +78,11 @@ class LocalScheduler(abstract.AbstractScheduler):
 				id=task_data.id
 			))
 			if exit_status == constants.EXIT_STATUS_OK:
+				task_data.mark_finished()
 				if (task_data.unfinished_count == 0):
 					workflow.update(task_data.task, task.TaskStatus.Finished)
 			else:
-				task_data.fail_count += 1
+				task_data.mark_failed()
 				if (task_data.fail_count < config.scheduler.reschedule_attempts):
 					print("Task {id} failed. Rescheduling".format(id=task_data.id))
 					self.tasks.put(task_data)

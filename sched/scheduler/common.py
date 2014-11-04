@@ -12,6 +12,12 @@ class TaskData(object):
 		
 		self._unfinished_count = unfinished_count
 		self._fail_count = 0
+		
+	def mark_failed(self):
+		self._fail_count += 1
+		
+	def mark_finished(self):
+		self._unfinished_count.acquire()
 
 	@property
 	def unfinished_count(self):
