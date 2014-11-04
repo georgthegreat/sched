@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
+import opster
+
 from sched import workflow
 from sched import scheduler
 
-#w = workflow.AbstractWorkflow.from_xml_file("examples/copier/copier.xml")
-w = workflow.AbstractWorkflow.from_xml_file("examples/montage/montage.xml")
-s = scheduler.LocalScheduler()
+@opster.command()
+def main(
+	path=("p", "", "path to XML file with workflow description")
+):
+	w = workflow.AbstractWorkflow.from_xml_file(path)
+	s = scheduler.LocalScheduler()
 
-s.schedule(w)
-if w.failed:
-	print("Schedule failed")
-else:
-	print("Schedule completed successfully")
+	s.schedule(w)
+	if w.failed:
+		print("Schedule failed")
+	else:
+		print("Schedule completed successfully")
+
+if __name__ == "__main__":
+	main.command()
