@@ -1,12 +1,15 @@
 #pragma once
 
+#include "common.hpp"
+
 #include <ctime>
 #include <string>
+#include <set>
 #include <vector>
 
 namespace llapi {
 
-enum JobState
+enum StepState
 {
 	Idle,
 	Pending,
@@ -37,9 +40,10 @@ class JobInfo
 {
 public:
 	JobInfo(
-		const std::string& name,
-		const std::string& jobClass,
-		JobState state,
+		const std::string& jobId,
+		const std::string& stepId,
+		const std::string& stepClass,
+		StepState stepState,
 		size_t cpusRequested,
 		size_t cpusAllocated,
 		time_t submitTime,
@@ -47,9 +51,10 @@ public:
 		time_t startTime,
 		time_t completionTime
 	) :
-		name_(name),
-		jobClass_(jobClass),
-		state_(state),
+		jobId_(jobId),
+		stepId_(stepId),
+		stepClass_(stepClass),
+		stepState_(stepState),
 		cpusRequested_(cpusRequested),
 		cpusAllocated_(cpusAllocated),
 		submitTime_(submitTime),
@@ -59,19 +64,24 @@ public:
 	{
 	}
 
-	const std::string& name() const
+	const std::string& jobId() const
 	{
-		return name_;
+		return jobId_;
 	}
 
-	const std::string& jobClass() const
+	const std::string& stepId() const
 	{
-		return jobClass_;
+		return stepId_;
 	}
 
-	JobState state() const
+	const std::string& stepClass() const
 	{
-		return state_;
+		return stepClass_;
+	}
+
+	StepState stepState() const
+	{
+		return stepState_;
 	}
 
 	size_t cpusRequested() const
@@ -105,10 +115,11 @@ public:
 	}
 
 private:
-	std::string name_;
-	std::string jobClass_;
+	std::string jobId_;
+	std::string stepId_;
+	std::string stepClass_;
 
-	JobState state_;
+	StepState stepState_;
 
 	size_t cpusRequested_;
 	size_t cpusAllocated_;
@@ -122,10 +133,13 @@ private:
 class JobsInfo
 {
 public:
-	JobsInfo(JobState state);
+	JobsInfo(StepState state);
+	JobsInfo(const std::set<StepState>& states);
+	JobsInfo(const std::string& jobId);
 
-	typedef std::vector<JobInfo>::iterator iterator;
-	typedef std::vector<JobInfo>::const_iterator const_iterator;
+	typedef std::vector<JobInfo> JobInfos;
+	typedef JobInfos::iterator iterator;
+	typedef JobInfos::const_iterator const_iterator;
 
 	iterator begin()
 	{
@@ -133,16 +147,6 @@ public:
 	}
 
 	iterator end()
-	{
-		return jobInfos_.end();
-	}
-
-	const_iterator begin() const
-	{
-		return jobInfos_.begin();
-	}
-
-	const_iterator end() const
 	{
 		return jobInfos_.end();
 	}
@@ -158,7 +162,8 @@ public:
 	}
 
 private:
-	std::vector<JobInfo> jobInfos_;
+	JobInfos extractJobInfos(Element* llJob);
+	JobInfos jobInfos_;
 };
 
 } //namespace llapi

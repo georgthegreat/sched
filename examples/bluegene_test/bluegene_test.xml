@@ -1,0 +1,30 @@
+﻿<?xml version="1.0"?>
+<workflow>
+	<!--Datasets described below-->
+	<datasets>
+		<dataset type="input_file" id="input_dataset">
+			<description>File to be analyzed</description>
+			<path>data.4gb.bin</path>
+		</dataset>
+		<dataset type="output_file" id="output_dataset">
+			<description>Staistics</description>
+			<path>stat.txt</path>
+		</dataset>
+	</datasets>
+
+	<!--Tasks described below-->
+	<tasks>
+		<task id="data_copier_1">
+			<description>Simply copies data from input to output</description>
+			<inputs>
+				<dataset id="input_dataset"/>
+			</inputs>
+			<outputs>
+				<dataset id="output_dataset"/>
+			</outputs>
+			<commands>
+				<command type="mpi" min-nodes="64" max-nodes="256">./bg_mpi_test $input_dataset $output_dataset</command>
+			</commands>
+		</task>
+	</tasks>
+</workflow>

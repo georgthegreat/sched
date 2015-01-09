@@ -5,13 +5,24 @@ class TaskData(object):
 	"""
 	Auxiliary class to be used within schedulers
 	"""
-	def __init__(self, task_, args, unfinished_count, callback):
+	def __init__(
+		self, 
+		task_, 
+		args, 
+		unfinished_count, 
+		nodes_count, 
+		time_limit_seconds, 
+		callback
+	):
 		self._task = task_
 		self._callback = callback
 		self._args = args
 		
 		self._unfinished_count = unfinished_count
 		self._fail_count = 0
+
+		self._nodes_count = nodes_count
+		self._time_limit_seconds = time_limit_seconds
 		
 	def mark_failed(self):
 		self._fail_count += 1
@@ -53,6 +64,14 @@ class TaskData(object):
 	@property
 	def id(self):
 		return self._task.id
+
+	@property
+	def nodes_count(self):
+		return self._nodes_count
+
+	@property
+	def time_limit_seconds(self):
+		return self._time_limit_seconds
 		
 	@property
 	def task(self):

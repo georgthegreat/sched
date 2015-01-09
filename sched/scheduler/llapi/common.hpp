@@ -4,11 +4,35 @@
 
 #include <llapi.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include <Python.h>
 
 namespace llapi {
 
 typedef LL_element Element;
+
+/*
+ * Utility class releasing Python GIL in ctor, releasing it in dtor
+ */
+class PythonThreadSaver
+{
+public:
+	PythonThreadSaver()
+	{
+		threadState_ = PyEval_SaveThread();
+	}
+
+	~PythonThreadSaver()
+	{
+		PyEval_RestoreThread(threadState_);
+	}
+
+private:
+	PyThreadState* threadState_;
+
+};
 
 class QueryDeleter
 {
@@ -55,7 +79,7 @@ T getData(Element* element, LLAPI_Specification spec)
 }
 
 //named temporary file that will be automatically removed upon object destruction
-class TemporaryFile
+class TemporaryFile : boost::noncopyable
 {
 public:
 	TemporaryFile(const std::string& prefix);
@@ -67,10 +91,10 @@ public:
 		return name_;
 	}
 
+	static std::string randomName(const std::string& prefix, size_t length);
+
 private:
 	std::string name_;
-
-	static std::string randomName(size_t length);
 };
 
 

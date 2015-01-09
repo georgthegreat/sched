@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 import opster
 
 from sched import workflow
@@ -7,10 +9,20 @@ from sched import scheduler
 
 @opster.command()
 def main(
-	path=("p", "", "path to XML file with workflow description")
+	path=("p", "", "path to XML file with workflow description"),
+	scheduler_type=("s", "", "scheduler type to use (local, loadleveler)")
 ):
 	w = workflow.AbstractWorkflow.from_xml_file(path)
-	s = scheduler.LocalScheduler()
+
+	if (scheduler_type == "local"):
+		s = scheduler.LocalScheduler()
+	elif (scheduler_type == "loadleveler"):
+		s = scheduler.LoadLevelerScheduler()
+	else:
+		print("Unsupported scheduler type {scheduler_type}".format(
+			scheduler_type=scheduler_type
+		))
+		sys.exit(1)
 
 	s.schedule(w)
 	if w.failed:

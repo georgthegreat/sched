@@ -6,6 +6,8 @@
 #include <boost/python.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <cstdlib>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -15,7 +17,8 @@ boost::shared_ptr<SubmitInfo> makeSubmitInfo(
 	const boost::python::list& command,
 	const std::string& outputStream,
 	const std::string& errorStream,
-	const std::string& jobClass
+	size_t nodesLimit,
+	size_t timeLimitSeconds
 )
 {
 	std::vector<std::string> commandVector;
@@ -29,8 +32,30 @@ boost::shared_ptr<SubmitInfo> makeSubmitInfo(
 		commandVector,
 		outputStream,
 		errorStream,
-		jobClass
+		nodesLimit,
+		timeLimitSeconds
 	));
+}
+
+boost::shared_ptr<JobsInfo> makeJobsInfoFromStepState(llapi::StepState state)
+{
+	return boost::shared_ptr<JobsInfo>(new JobsInfo(state));
+}
+
+boost::shared_ptr<JobsInfo> makeJobsInfoFromJobId(const std::string& jobId)
+{
+	return boost::shared_ptr<JobsInfo>(new JobsInfo(jobId));
+}
+
+boost::shared_ptr<JobsInfo> makeJobsInfoFromList(const boost::python::list& list)
+{
+	std::set<StepState> stepStates;
+	for (int i = 0; i < len(list); ++i) {
+		StepState state = boost::python::extract<StepState>(list[i]);
+		stepStates.insert(state);
+	}
+
+	return boost::shared_ptr<JobsInfo>(new JobsInfo(stepStates));
 }
 
 }
@@ -39,7 +64,9 @@ BOOST_PYTHON_MODULE(_llapi)
 {
 	using namespace boost::python;
 	using namespace llapi;
-	enum_<JobState>("JobState")
+	srand(time(NULL));
+
+	enum_<llapi::StepState>("StepState")
 		.value("Idle", Idle)
 		.value("Pending", Pending)
 		.value("Starting", Starting)
@@ -67,16 +94,21 @@ BOOST_PYTHON_MODULE(_llapi)
 
 	class_<JobInfo, boost::noncopyable>("JobInfo", no_init)
 		.def(
-			"get_name",
-			&JobInfo::name,
+			"get_job_id",
+			&JobInfo::jobId,
 			return_value_policy<copy_const_reference>()
 		)
 		.def(
-			"get_job_class", &
-			JobInfo::jobClass,
+			"get_step_id",
+			&JobInfo::stepId,
 			return_value_policy<copy_const_reference>()
 		)
-		.def_readonly("state", &JobInfo::state)
+		.def(
+			"get_step_class", &
+			JobInfo::stepClass,
+			return_value_policy<copy_const_reference>()
+		)
+		.def_readonly("step_state", &JobInfo::stepState)
 		.def_readonly("cpus_allocated", &JobInfo::cpusAllocated)
 		.def_readonly("cpus_requested", &JobInfo::cpusRequested)
 		.def_readonly("submit_time", &JobInfo::submitTime)
@@ -85,13 +117,20 @@ BOOST_PYTHON_MODULE(_llapi)
 		.def_readonly("completion_time", &JobInfo::completionTime)
 	;
 
-	class_<JobsInfo, boost::noncopyable>("JobsInfo", init<JobState>())
+	class_<JobsInfo, boost::noncopyable>("JobsInfo", no_init)
+		.def("__init__", make_constructor(makeJobsInfoFromStepState))
+		.def("__init__", make_constructor(makeJobsInfoFromJobId))
+		.def("__init__", make_constructor(makeJobsInfoFromList))
 		.def("__len__", &JobsInfo::size)
 		.def(
 			"__getitem__",
 			&JobsInfo::operator[],
 			return_internal_reference<>()
 		)
+		.def("__iter__", range<return_value_policy<copy_non_const_reference> >(
+			&JobsInfo::begin,
+			&JobsInfo::end
+		))
 	;
 
 	class_<MachineInfo, boost::noncopyable>("MachineInfo", init<>())
@@ -100,6 +139,19 @@ BOOST_PYTHON_MODULE(_llapi)
 
 	class_<SubmitInfo, boost::noncopyable>("SubmitInfo", no_init)
 		.def("__init__", make_constructor(makeSubmitInfo))
-		.def("submit", &SubmitInfo::submit)
+	;
+
+	class_<WaitResult>("WaitResult", no_init)
+		.def(
+			"get_job_id",
+			&WaitResult::jobId,
+			return_value_policy<copy_const_reference>()
+		)
+		.def_readonly("step_state", &WaitResult::stepState)
+	;
+
+	class_<JobMonitor, boost::noncopyable>("JobMonitor", init<std::string>())
+		.def("submit_job", &JobMonitor::submitJob)
+		.def("wait", &JobMonitor::wait)
 	;
 }

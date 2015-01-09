@@ -107,7 +107,16 @@ class LocalScheduler(abstract.AbstractScheduler):
 				#using semaphore as shared counter
 				unfinished_count = threading.Semaphore(len(total_args))
 				for args in total_args:
-					task_data = common.TaskData(task_, args, unfinished_count, callback)
+					task_data = common.TaskData(
+						task_, 
+						args, 
+						unfinished_count,
+						#nodes_count isn't used by local scheduler
+						1,
+						#time_limit_seconds isn't used by local scheduler
+						None,
+						callback
+					)
 					self.tasks.put(task_data)
 
 	def run(self):

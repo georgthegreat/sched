@@ -1,6 +1,14 @@
 PYVERSION = 3.4m
 CPPFLAGS += -m64 -I/opt/ibmll/LoadL/full/include -I$(CHROOT)/usr/include/python$(PYVERSION) -Wall
-LDFLAGS += -m64 -lllapi -lboost_python -lpython$(PYVERSION)
+LDFLAGS += \
+	-m64 \
+	-lllapi \
+	-lboost_python \
+	-lboost_regex \
+	-lboost_system \
+	-lboost_thread \
+	-lpython$(PYVERSION) \
+
 LIB = _llapi.so
 CXX = g++
 

@@ -1,8 +1,14 @@
 #pragma once
 
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <sstream>
+
+namespace llapi
+{
+
+const int ERROR_NO_VALID_OBJECTS = -6;
 
 class Exception : public std::exception
 {
@@ -54,7 +60,7 @@ public:
 			case -5:
 				return "System error";
 
-			case -6:
+			case ERROR_NO_VALID_OBJECTS:
 				return "No valid objects meet the request";
 
 			case -7:
@@ -79,6 +85,11 @@ public:
 
 	virtual ~GetObjectsException() throw()
 	{
+	}
+
+	int errorCode() const
+	{
+		return errorCode_;
 	}
 
 private:
@@ -123,3 +134,4 @@ private:
 		throw Exception(ss.str()); \
 	} \
 
+} //namespace llapi

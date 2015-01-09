@@ -46,8 +46,8 @@ TemporaryFile::TemporaryFile(const std::string& prefix)
 {
 	while (true)
 	{
-		name_ = prefix + "/" + randomName(NAME_SIZE);
-		if (!std::ifstream(name_.c_str())) {
+		name_ = randomName(prefix, NAME_SIZE);
+		if (!std::ifstream(name_.c_str()).good()) {
 			break;
 		}
 	}
@@ -58,14 +58,14 @@ TemporaryFile::~TemporaryFile()
 	remove(name_.c_str());
 }
 
-std::string TemporaryFile::randomName(size_t length)
+std::string TemporaryFile::randomName(const std::string& prefix, size_t length)
 {
 	size_t nameCharsSize = NAME_CHARS.size();
 
-	std::string result;
+	std::string result = prefix;
 	for (size_t i = 0; i < length; ++i)
 	{
-		size_t index = (rand() * nameCharsSize) / (RAND_MAX + 1);
+		size_t index = (static_cast<size_t>(std::rand()) * nameCharsSize) / RAND_MAX;
 		result += NAME_CHARS[index];
 	}
 
